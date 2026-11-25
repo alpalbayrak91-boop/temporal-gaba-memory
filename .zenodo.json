@@ -1,0 +1,22 @@
+{
+  "title": "Temporal-GABA-Memory: Causal Inhibitory Negative-Knowledge Gating and Corpus-Centered 3-Channel RBF Vendi Re-Ranking",
+  "upload_type": "software",
+  "description": "Zero-dependency Pure Python 3.10+ MIT implementation of temporal-causal GABA negative-knowledge gating, corpus-centered 3-channel Bochner-PSD RBF Vendi diversity re-ranking with Cholesky PSD verification, monotonic 2-hop causal RRF retrieval, empirical paper, and a companion 22-theorem Lean 4.35 formalization of epistemic DAG/holonomy/dimensional algebra (0 sorry).",
+  "creators": [
+    {
+      "name": "Albayrak, Alp",
+      "affiliation": "AlpLab Research"
+    }
+  ],
+  "keywords": [
+    "agent-memory",
+    "RAG",
+    "negative-knowledge",
+    "Vendi-score",
+    "temporal-graph",
+    "Lean 4"
+  ],
+  "license": "MIT",
+  "version": "0.1.0",
+  "access_right": "open"
+}

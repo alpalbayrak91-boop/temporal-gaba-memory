@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use temporal-gaba-memory in research or agent architectures, please cite it below."
+title: "AlpLab-Temporal-GABA-Memory: Causal Inhibitory Negative-Knowledge Gating and H-Centered 3-Channel RBF Hybrid Vendi Re-Ranking"
+type: software
+authors:
+  - family-names: "Albayrak"
+    given-names: "Alp"
+license: "MIT"
+repository-code: "https://github.com/alpalbayrak91-boop/temporal-gaba-memory"
+version: "0.1.0"
+date-released: "2026-11-25"
+keywords:
+  - agent-memory
+  - negative-knowledge
+  - vendi-score
+  - temporal-graph
+  - rag
+  - lean4
