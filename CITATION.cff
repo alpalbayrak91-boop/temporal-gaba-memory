@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "If you use temporal-gaba-memory in research or agent architectures, please cite it below."
-title: "AlpLab-Temporal-GABA-Memory: Causal Inhibitory Negative-Knowledge Gating and H-Centered 3-Channel RBF Hybrid Vendi Re-Ranking"
+message: "If you use temporal-gaba-memory in research or autonomous agent architectures, please cite it below."
+title: "Temporal-GABA-Memory: A 6-Layer Mathematically Verified Bi-Temporal, Sheaf-Cohomological and Crowding-Optimal Multi-Agent Memory System"
 type: software
 authors:
   - family-names: "Albayrak"
@@ -8,12 +8,15 @@ authors:
     orcid: "https://orcid.org/0009-0008-9737-4477"
 license: "MIT"
 repository-code: "https://github.com/alpalbayrak91-boop/temporal-gaba-memory"
-version: "0.3.0"
+version: "1.0.0"
 date-released: "2026-11-26"
 keywords:
   - agent-memory
+  - bitemporal-database
+  - belief-revision
+  - cellular-sheaves
   - negative-knowledge
   - vendi-score
-  - temporal-graph
+  - merkle-provenance
   - rag
   - lean4

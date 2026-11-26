@@ -1,7 +1,7 @@
 # Temporal-GABA-Memory: Causal Inhibitory Negative-Knowledge Gating and Corpus-Centered 3-Channel RBF Vendi Re-Ranking for Autonomous Agent Memory
 
-**Author:** Alp Albayrak (AlpLab Research)  
-**Package:** `temporal-gaba-memory` (`v0.1.0`, MIT License, Pure Python 3.10+, zero external dependencies)  
+**Author:** Alp Albayrak (ORCID: [0009-0008-9737-4477](https://orcid.org/0009-0008-9737-4477))  
+**Package:** `temporal-gaba-memory` (`v1.0.0`, Layer 1 reference study; MIT License, Pure Python 3.10+, zero external dependencies)  
 **Repository:** https://github.com/alpalbayrak91-boop/temporal-gaba-memory  
 **Execution Cost:** `0.00 USD`
 
@@ -53,7 +53,7 @@ Across `1,000` randomized property-based trials, the architecture incurred `0/1,
 
 ---
 
-## 3. Implemented Package Architecture (`temporal-gaba-memory v0.1.0`, MIT)
+## 3. Implemented Layer 1 Package Architecture (`temporal-gaba-memory v1.0.0`, MIT)
 
 The standalone MIT reference implementation lives in `src/temporal_gaba_memory/`:
 
@@ -71,7 +71,7 @@ The standalone MIT reference implementation lives in `src/temporal_gaba_memory/`
 
 ## 4. Companion Lean 4 Formalization (`formal/EpistemicDAGSoundness.lean`)
 
-As a companion formal-methods artifact included in this repository, `formal/EpistemicDAGSoundness.lean` contains **22 machine-checked Lean 4.35 theorems (`0 sorry`, standard kernel axioms only, compiled with `lean --trust=0`)** formalizing foundational algebraic structures used in multi-agent epistemic ledgers:
+As a companion formal-methods artifact included in this repository, `formal/EpistemicDAGSoundness.lean` contains **36 machine-checked Lean 4 `theorem` declarations (`22` core numbered theorems + `14` algebraic/inductive helper theorems; `0 sorry`, standard kernel axioms, compiled with `lean --trust=0`)** formalizing foundational algebraic structures used in multi-agent epistemic ledgers:
 - 9-dimensional dimensional vector algebra (`DimVec9`),
 - Minkowski-Bienayme variance decomposition,
 - Non-trivial holonomy obstruction over `Z^9`, and

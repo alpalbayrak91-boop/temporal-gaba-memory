@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "temporal-gaba-memory"
-version = "0.3.0"
-description = "Zero-dependency Temporal-Causal GABA Inhibitory Memory Gate and Corpus-Centered 3-Channel RBF Vendi Re-Ranker for autonomous AI agents"
+version = "1.0.0"
+description = "Zero-dependency 6-Layer Mathematically Verified Bi-Temporal AGM, Cellular Sheaf H^1, Causal GABA & Crowding-Optimal Multi-Agent Memory System"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Alp Albayrak" }]
@@ -14,17 +14,23 @@ keywords = [
   "ai-agents",
   "agent-memory",
   "rag",
+  "bitemporal-database",
+  "belief-revision",
+  "cellular-sheaves",
   "vendi-score",
   "negative-knowledge",
-  "temporal-graph",
+  "merkle-tree",
   "lean4",
 ]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 

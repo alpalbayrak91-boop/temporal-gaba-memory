@@ -1,17 +1,17 @@
 """
-AlpLab Bulut v15 - Disiplinlerarasi Bellek ve Celiski Denetim Motoru
-Paket: VIZYON-ICRA-SUNFLOWER-MEMORY-PRUNER-20261125
-Kaynak Izomorfizm: VIZYON-BILIM-20261125-02 (Erdos #20 Sunflower Lemma & Erdos #23 / Toulouse Frustration)
+Erdos-Rado Delta-System Memory Pruner & Toulouse Spin-Glass Frustration Cut Auditor (Layer 2).
 
-Iki cekirdek deterministik operator + cift SQLite/PG17 depolama adaptoru:
-  1. SunflowerMemoryPruner (Erdos-Rado Delta-System): Ajan bulgularindaki ortak cekirdek (core Y)
-     etrafinda tekrarlayan ayrik yapraklari (petals >= k) saptayip kanonik cekirdege indirger.
-  2. FrustrationCutAuditor (Toulouse Spin-Glass Frustration): Celisen hipotez cizgesinde
-     Phi_0(G) = |E| - maxcut(G) (ve isaretli cizge genellemesi Phi_signed) hesaplar,
-     minimum engellenmis kenar kesimini ve tanik tek donguleri uretir.
-  3. Dual SQLite / PostgreSQL 17 Adaptoru + 200-Bulgu Sentetik vs. Gercek Sema Kiyaslama Paketi.
+Zero-dependency Python 3.10+ standard-library implementation of two deterministic
+combinatorial operators plus a dual SQLite / PostgreSQL 17 relational graph adapter:
+  1. SunflowerMemoryPruner (Erdos-Rado Delta-System): Detects >= k pairwise-disjoint
+     petal findings around canonical invariant cores Y and compacts leaf bloat.
+  2. FrustrationCutAuditor (Toulouse Spin-Glass Frustration): Computes the exact
+     signed-graph frustration index Phi_0(G) = |E| - MaxCut(G), minimal frustrated
+     edge cuts, and shortest odd witness cycles.
+  3. MemoryGraphStore: Dual SQLite / PostgreSQL 17 relational persistence adapter
+     with configurable table prefixing and 200-finding comparative benchmark suite.
 
-KURAL-3 UYUMU: Tum para birimleri yalnizca duz metin USD olarak ifade edilir (0 chr(36)).
+Currency hygiene: All monetary quantities are expressed strictly in plain-text USD.
 """
 
 from __future__ import annotations
@@ -29,10 +29,10 @@ import time
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 # ---------------------------------------------------------------------------
-# Kanonik Sema Sabitleri (Canli PG17 public.alplab_ortak_bulgular / temporal_edges)
+# Canonical Relational Schema Columns (shared_findings / temporal_edges)
 # ---------------------------------------------------------------------------
 
-ORTAK_BULGULAR_COLUMNS: Tuple[str, ...] = (
+SHARED_FINDINGS_COLUMNS: Tuple[str, ...] = (
     "bulgu_id",
     "kaynak_ref",
     "kaynak_ajan",
@@ -48,6 +48,7 @@ ORTAK_BULGULAR_COLUMNS: Tuple[str, ...] = (
     "created_at",
     "updated_at",
 )
+ORTAK_BULGULAR_COLUMNS: Tuple[str, ...] = SHARED_FINDINGS_COLUMNS
 
 TEMPORAL_EDGES_COLUMNS: Tuple[str, ...] = (
     "id",
@@ -135,17 +136,17 @@ def canonical_sha256(payload: Any) -> str:
 
 
 def check_zero_dollar_symbol(text: str) -> bool:
-    """KURAL-3 denetimi: metinde chr(36) bulunmadigini dogrular."""
+    """Verify that plain-text output contains zero ASCII-36 currency symbols."""
     return chr(36) not in text
 
 
 # ---------------------------------------------------------------------------
-# Veri Modelleri
+# Data Models
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
 class FindingRecord:
-    """public.alplab_ortak_bulgular tablosu ile birebir 14-kolon uyumlu bulgu kaydi."""
+    """14-column relational finding record compatible with `shared_findings`."""
     bulgu_id: str
     konu_id: str
     alan: str
@@ -154,7 +155,7 @@ class FindingRecord:
     puan: float = 5.0
     durum: str = "ADAY"
     kaynak_ref: str = ""
-    kaynak_ajan: str = "web_gemini"
+    kaynak_ajan: str = "research_agent"
     kanit: str = ""
     denetim_notu: str = "{}"
     kullanildi: int = 0
@@ -366,8 +367,8 @@ def erdos20_f2_exact(k: int) -> int:
 
 def erdos23_b_delta_exact_small(n: int) -> Optional[int]:
     """
-    Erdos #23 exact b_Delta(N) = max { |E(G)| - maxcut(G) : G ucgensiz, |V|=N }
-    VIZYON-BILIM-20261125-02 kanitli kucuk degerler (N = 1..10).
+    Erdos #23 exact b_Delta(N) = max { |E(G)| - maxcut(G) : G triangle-free, |V|=N }
+    Verified small-order values for N = 1..10.
     """
     table = {1: 0, 2: 0, 3: 0, 4: 0, 5: 1, 6: 1, 7: 1, 8: 2, 9: 2, 10: 4}
     return table.get(n)
@@ -534,7 +535,7 @@ class SunflowerMemoryPruner:
             for tok in _TOKEN_RE.findall(chunk):
                 if tok in TR_EN_STOPWORDS or tok.isdigit():
                     continue
-                if tok.startswith("http") or tok in {"com", "org", "blob", "main", "tools", "tests", "formal", "agent", "hub", "projects", "home", "alp"}:
+                if tok.startswith("http") or tok in {"com", "org", "blob", "main", "tools", "tests", "formal", "agent", "hub", "projects", "home"}:
                     continue
                 tokens.append(tok)
         return tokens
@@ -779,8 +780,8 @@ class FrustrationCutAuditor:
         include_support_edges: bool = False,
     ) -> List[HypothesisEdge]:
         """
-        Acik zamansal kenarlari (alplab_temporal_edges) ve bulgular arasi
-        yapisal celiski sinyallerini deterministik olarak cizge kenarlarina cevirir.
+        Deterministically extract signed graph edges from explicit `temporal_edges`
+        and structural refutation signals across `shared_findings`.
         """
         merged: Dict[Tuple[str, str], HypothesisEdge] = {}
 
@@ -816,7 +817,7 @@ class FrustrationCutAuditor:
             text = normalize_text(f.baslik + " " + f.ozet)
             return any(cue in text for cue in REFUTATION_CUES)
 
-        # Ozel problem/varlik capalari (orn. erdos #184, kiosk, kredi tavan)
+        # Problem / entity anchors (e.g. erdos #184, protocol invariants)
         erdos_re = re.compile(r"erdos\s*#?\s*(\d+)")
         erdos_anchors: Dict[str, Set[str]] = {}
         for f in findings:
@@ -1384,11 +1385,31 @@ class FrustrationCutAuditor:
 
 
 # ---------------------------------------------------------------------------
-# 3. Cift SQLite / PostgreSQL 17 Depolama Adaptoru
+# 3. Dual SQLite / PostgreSQL 17 Relational Persistence Adapter
 # ---------------------------------------------------------------------------
 
-SQLITE_SCHEMA_DDL = """
-CREATE TABLE IF NOT EXISTS alplab_ortak_bulgular (
+_TABLE_PREFIX_RE = re.compile(r"\A[A-Za-z0-9_]*\Z")
+
+
+def build_sqlite_schema_ddl(table_prefix: str = "") -> str:
+    """Build SQLite DDL for the 7 canonical memory & audit tables."""
+    if not _TABLE_PREFIX_RE.match(table_prefix):
+        raise ValueError(f"Invalid table_prefix: {table_prefix!r}")
+    p = table_prefix
+    return f"""
+CREATE TABLE IF NOT EXISTS {p}memory_episodes (
+    episode_id TEXT PRIMARY KEY,
+    slot_key TEXT NOT NULL,
+    valid_from REAL NOT NULL,
+    valid_until REAL,
+    tx_from REAL NOT NULL,
+    tx_until REAL,
+    superseded_by TEXT,
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS {p}shared_findings (
     bulgu_id TEXT PRIMARY KEY,
     kaynak_ref TEXT,
     kaynak_ajan TEXT,
@@ -1405,7 +1426,7 @@ CREATE TABLE IF NOT EXISTS alplab_ortak_bulgular (
     updated_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS alplab_temporal_edges (
+CREATE TABLE IF NOT EXISTS {p}temporal_edges (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source_key TEXT NOT NULL,
     target_key TEXT NOT NULL,
@@ -1419,11 +1440,11 @@ CREATE TABLE IF NOT EXISTS alplab_temporal_edges (
     importance TEXT DEFAULT 'P2',
     confidence REAL DEFAULT 1.0,
     source_agent TEXT,
-    metadata TEXT DEFAULT '{}',
+    metadata TEXT DEFAULT '{{}}',
     created_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS alplab_sunflower_pruning_runs (
+CREATE TABLE IF NOT EXISTS {p}sunflower_pruning_runs (
     run_id TEXT PRIMARY KEY,
     k_threshold INTEGER NOT NULL,
     min_core_size INTEGER NOT NULL,
@@ -1438,7 +1459,7 @@ CREATE TABLE IF NOT EXISTS alplab_sunflower_pruning_runs (
     created_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS alplab_sunflower_clusters (
+CREATE TABLE IF NOT EXISTS {p}sunflower_clusters (
     run_id TEXT NOT NULL,
     core_id TEXT NOT NULL,
     konu_scope TEXT NOT NULL,
@@ -1451,7 +1472,7 @@ CREATE TABLE IF NOT EXISTS alplab_sunflower_clusters (
     PRIMARY KEY (run_id, core_id)
 );
 
-CREATE TABLE IF NOT EXISTS alplab_frustration_audit_runs (
+CREATE TABLE IF NOT EXISTS {p}frustration_audit_runs (
     audit_id TEXT PRIMARY KEY,
     node_count INTEGER NOT NULL,
     edge_count INTEGER NOT NULL,
@@ -1468,7 +1489,7 @@ CREATE TABLE IF NOT EXISTS alplab_frustration_audit_runs (
     created_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS alplab_frustration_cut_edges (
+CREATE TABLE IF NOT EXISTS {p}frustration_cut_edges (
     audit_id TEXT NOT NULL,
     source_key TEXT NOT NULL,
     target_key TEXT NOT NULL,
@@ -1482,16 +1503,29 @@ CREATE TABLE IF NOT EXISTS alplab_frustration_cut_edges (
 """
 
 
-class MemoryGraphStore:
-    """
-    SQLite3 ve PostgreSQL 17 (psycopg) ile uyumlu cift-lehce bellek/cizge deposu.
-    """
+SQLITE_SCHEMA_DDL = build_sqlite_schema_ddl("")
 
-    def __init__(self, conn: Any, dialect: str = "sqlite") -> None:
+
+class MemoryGraphStore:
+    """Dual-dialect SQLite3 / PostgreSQL 17 memory graph persistence adapter."""
+
+    def __init__(self, conn: Any, dialect: str = "sqlite", table_prefix: str = "") -> None:
         if dialect not in {"sqlite", "pg17"}:
             raise ValueError("dialect must be 'sqlite' or 'pg17'")
+        if not _TABLE_PREFIX_RE.match(table_prefix):
+            raise ValueError(f"Invalid table_prefix: {table_prefix!r}")
         self.conn = conn
         self.dialect = dialect
+        self.table_prefix = table_prefix
+        self.tables: Dict[str, str] = {
+            "episodes": f"{table_prefix}memory_episodes",
+            "findings": f"{table_prefix}shared_findings",
+            "edges": f"{table_prefix}temporal_edges",
+            "sunflower_runs": f"{table_prefix}sunflower_pruning_runs",
+            "sunflower_clusters": f"{table_prefix}sunflower_clusters",
+            "frustration_runs": f"{table_prefix}frustration_audit_runs",
+            "frustration_edges": f"{table_prefix}frustration_cut_edges",
+        }
 
     def _ph(self, count: int) -> str:
         token = "?" if self.dialect == "sqlite" else "%s"
@@ -1499,44 +1533,53 @@ class MemoryGraphStore:
 
     def init_sqlite_schema(self) -> None:
         if self.dialect != "sqlite":
-            raise RuntimeError("init_sqlite_schema is for sqlite dialect; use sql/konu4_sunflower_frustration_memory_pg17.sql for PG17")
-        self.conn.executescript(SQLITE_SCHEMA_DDL)
+            raise RuntimeError("init_sqlite_schema is only supported for the 'sqlite' dialect.")
+        self.conn.executescript(build_sqlite_schema_ddl(self.table_prefix))
         self.conn.commit()
 
     def verify_schema_parity(self) -> Dict[str, Any]:
-        """Depodaki alplab_ortak_bulgular ve alplab_temporal_edges kolon paritesini dogrular."""
+        """Verify exact column parity on `shared_findings` and `temporal_edges`."""
         cur = self.conn.cursor()
+        t_findings = self.tables["findings"]
+        t_edges = self.tables["edges"]
         if self.dialect == "sqlite":
-            cur.execute("PRAGMA table_info(alplab_ortak_bulgular)")
+            cur.execute(f"PRAGMA table_info({t_findings})")
             ob_cols = tuple(r[1] for r in cur.fetchall())
-            cur.execute("PRAGMA table_info(alplab_temporal_edges)")
+            cur.execute(f"PRAGMA table_info({t_edges})")
             te_cols = tuple(r[1] for r in cur.fetchall())
         else:
             cur.execute(
                 "SELECT column_name FROM information_schema.columns "
-                "WHERE table_schema = 'public' AND table_name = 'alplab_ortak_bulgular' "
-                "ORDER BY ordinal_position"
+                "WHERE table_schema = 'public' AND table_name = %s "
+                "ORDER BY ordinal_position",
+                (t_findings,),
             )
             ob_cols = tuple(r[0] for r in cur.fetchall())
             cur.execute(
                 "SELECT column_name FROM information_schema.columns "
-                "WHERE table_schema = 'public' AND table_name = 'alplab_temporal_edges' "
-                "ORDER BY ordinal_position"
+                "WHERE table_schema = 'public' AND table_name = %s "
+                "ORDER BY ordinal_position",
+                (t_edges,),
             )
             te_cols = tuple(r[0] for r in cur.fetchall())
+        ob_ok = ob_cols == SHARED_FINDINGS_COLUMNS
+        te_ok = te_cols == TEMPORAL_EDGES_COLUMNS
         return {
             "dialect": self.dialect,
-            "ortak_bulgular_exact_match": ob_cols == ORTAK_BULGULAR_COLUMNS,
-            "temporal_edges_exact_match": te_cols == TEMPORAL_EDGES_COLUMNS,
+            "shared_findings_exact_match": ob_ok,
+            "ortak_bulgular_exact_match": ob_ok,
+            "temporal_edges_exact_match": te_ok,
+            "shared_findings_columns": list(ob_cols),
             "ortak_bulgular_columns": list(ob_cols),
             "temporal_edges_columns": list(te_cols),
         }
 
     def upsert_findings(self, findings: Sequence[FindingRecord]) -> int:
-        cols_sql = ", ".join(ORTAK_BULGULAR_COLUMNS)
-        ph = self._ph(len(ORTAK_BULGULAR_COLUMNS))
+        cols_sql = ", ".join(SHARED_FINDINGS_COLUMNS)
+        ph = self._ph(len(SHARED_FINDINGS_COLUMNS))
+        t_findings = self.tables["findings"]
         sql = (
-            f"INSERT INTO alplab_ortak_bulgular ({cols_sql}) VALUES ({ph}) "
+            f"INSERT INTO {t_findings} ({cols_sql}) VALUES ({ph}) "
             "ON CONFLICT(bulgu_id) DO UPDATE SET "
             "baslik = excluded.baslik, ozet = excluded.ozet, puan = excluded.puan, "
             "durum = excluded.durum, updated_at = excluded.updated_at"
@@ -1548,8 +1591,9 @@ class MemoryGraphStore:
 
     def insert_temporal_edges(self, edges: Sequence[HypothesisEdge], created_at: str = "2026-11-25T18:00:00+00:00") -> int:
         ph = self._ph(10)
+        t_edges = self.tables["edges"]
         sql = (
-            "INSERT INTO alplab_temporal_edges "
+            f"INSERT INTO {t_edges} "
             "(source_key, target_key, rel_type, weight, evidence, valid_from, is_active, importance, confidence, created_at) "
             f"VALUES ({ph})"
         )
@@ -1574,24 +1618,25 @@ class MemoryGraphStore:
         return len(rows)
 
     def load_findings(self, konu_id: Optional[str] = None, limit: int = 1000) -> List[FindingRecord]:
-        cols_sql = ", ".join(ORTAK_BULGULAR_COLUMNS)
+        cols_sql = ", ".join(SHARED_FINDINGS_COLUMNS)
+        t_findings = self.tables["findings"]
         cur = self.conn.cursor()
         if konu_id:
             ph = "?" if self.dialect == "sqlite" else "%s"
             cur.execute(
-                f"SELECT {cols_sql} FROM alplab_ortak_bulgular WHERE konu_id = {ph} ORDER BY created_at DESC, bulgu_id ASC LIMIT {ph}",
+                f"SELECT {cols_sql} FROM {t_findings} WHERE konu_id = {ph} ORDER BY created_at DESC, bulgu_id ASC LIMIT {ph}",
                 (konu_id, int(limit)),
             )
         else:
             ph = "?" if self.dialect == "sqlite" else "%s"
             cur.execute(
-                f"SELECT {cols_sql} FROM alplab_ortak_bulgular ORDER BY created_at DESC, bulgu_id ASC LIMIT {ph}",
+                f"SELECT {cols_sql} FROM {t_findings} ORDER BY created_at DESC, bulgu_id ASC LIMIT {ph}",
                 (int(limit),),
             )
         rows = cur.fetchall()
         out: List[FindingRecord] = []
         for r in rows:
-            mapping = dict(zip(ORTAK_BULGULAR_COLUMNS, r))
+            mapping = dict(zip(SHARED_FINDINGS_COLUMNS, r))
             out.append(FindingRecord.from_mapping(mapping))
         return out
 
@@ -1599,9 +1644,10 @@ class MemoryGraphStore:
         rel_pool = sorted(CONTRADICTION_REL_TYPES | (SUPPORT_REL_TYPES if include_support else set()))
         ph = self._ph(len(rel_pool))
         active_cond = "is_active = 1" if self.dialect == "sqlite" else "is_active = TRUE"
+        t_edges = self.tables["edges"]
         sql = (
             "SELECT source_key, target_key, rel_type, weight, COALESCE(evidence, '') "
-            f"FROM alplab_temporal_edges WHERE {active_cond} AND rel_type IN ({ph}) "
+            f"FROM {t_edges} WHERE {active_cond} AND rel_type IN ({ph}) "
             "ORDER BY id ASC"
         )
         cur = self.conn.cursor()
@@ -1624,8 +1670,10 @@ class MemoryGraphStore:
     def save_sunflower_report(self, report: SunflowerPruneReport, created_at: str = "2026-11-25T18:00:00+00:00") -> None:
         cur = self.conn.cursor()
         ph_run = self._ph(12)
+        t_runs = self.tables["sunflower_runs"]
+        t_clusters = self.tables["sunflower_clusters"]
         cur.execute(
-            "INSERT INTO alplab_sunflower_pruning_runs "
+            f"INSERT INTO {t_runs} "
             "(run_id, k_threshold, min_core_size, retain_petals, input_count, surviving_count, "
             "pruned_count, compression_ratio, post_prune_sunflower_free, cost_usd, receipt_sha256, created_at) "
             f"VALUES ({ph_run}) ON CONFLICT(run_id) DO NOTHING",
@@ -1647,7 +1695,7 @@ class MemoryGraphStore:
         ph_cl = self._ph(9)
         for c in report.clusters:
             cur.execute(
-                "INSERT INTO alplab_sunflower_clusters "
+                f"INSERT INTO {t_clusters} "
                 "(run_id, core_id, konu_scope, core_atoms_json, canonical_bulgu_id, petal_count, "
                 "pruned_ids_json, petal_deltas_json, exact_disjoint_verified) "
                 f"VALUES ({ph_cl}) ON CONFLICT(run_id, core_id) DO NOTHING",
@@ -1668,9 +1716,11 @@ class MemoryGraphStore:
     def save_frustration_report(self, report: FrustrationAuditReport, created_at: str = "2026-11-25T18:00:00+00:00") -> None:
         cur = self.conn.cursor()
         ph_run = self._ph(14)
+        t_runs = self.tables["frustration_runs"]
+        t_edges = self.tables["frustration_edges"]
         b_conv = (lambda b: 1 if b else 0) if self.dialect == "sqlite" else (lambda b: bool(b))
         cur.execute(
-            "INSERT INTO alplab_frustration_audit_runs "
+            f"INSERT INTO {t_runs} "
             "(audit_id, node_count, edge_count, contradiction_edge_count, support_edge_count, "
             "frustration_index_phi0, maxcut_value, is_exact, triangle_count, erdos23_bound, "
             "cut_clears_all_frustration, cost_usd, receipt_sha256, created_at) "
@@ -1700,7 +1750,7 @@ class MemoryGraphStore:
             for ed in edge_list:
                 cyc_json = json.dumps(witness_by_edge.get((ed["source_key"], ed["target_key"]), []), ensure_ascii=True)
                 cur.execute(
-                    "INSERT INTO alplab_frustration_cut_edges "
+                    f"INSERT INTO {t_edges} "
                     "(audit_id, source_key, target_key, sign, weight, rel_type, is_frustrated, witness_cycle_json) "
                     f"VALUES ({ph_edge}) ON CONFLICT(audit_id, source_key, target_key) DO NOTHING",
                     (
@@ -1718,46 +1768,44 @@ class MemoryGraphStore:
 
 
 # ---------------------------------------------------------------------------
-# 4. 200-Bulgu Sentetik Uretici + Canli PG17 Gercek Sema Kiyaslama Korpusu
+# 4. 200-Finding Synthetic Generator & Relational Schema Reference Corpus
 # ---------------------------------------------------------------------------
 
 def generate_synthetic_200_corpus(seed: int = 20261125) -> Dict[str, Any]:
     """
-    Gercekci 200-bulguluk sentetik alplab_ortak_bulgular korpusu + gomulu exact
-    sunflower aileleri ve exact Toulouse engellenmislik cizgesi uretir.
-
-    Yapi:
-      - 12 gomulu exact k-aycicegi (toplam 60 bulgu, k = 3..7, beklenen budanan = 48)
-      - 140 ayciceksiz bulgu (100 tekil + 20 adet k-1=2 cift = 40 bulgu)
-      - Gomulu celiski cizgesi (32 dugum, 46 kenar, 5 blok):
-          * Blok 0: Iki-parcali agac/cift (Phi_0 = 0)
-          * Blok 1: Ucgen K_3 (Phi_0 = 1)
-          * Blok 2: Besgen C_5 (Phi_0 = 1, ucgensiz)
-          * Blok 3: Wagner V_8 (Phi_0 = 2, ucgensiz, Erdos #23 N=8 ekstremal)
-          * Blok 4: C_5[I_2] sisirmesi (Phi_0 = 4, ucgensiz, Erdos #23 N=10 ekstremal)
-        Toplam kesin Phi_0(G) = 0 + 1 + 1 + 2 + 4 = 8, maxcut(G) = 46 - 8 = 38.
+    Generate a 200-finding benchmark corpus over `shared_findings` with planted exact
+    k-sunflower families and a 5-block Toulouse spin-glass contradiction graph:
+      - 12 planted exact k-sunflowers (60 findings total, k = 3..7, expected pruned = 48)
+      - 140 sunflower-free findings (100 singletons + 20 sub-threshold k=2 pairs = 40)
+      - 5-block contradiction graph (32 nodes, 46 edges):
+          * Block 0: Bipartite C_4 + tail (Phi_0 = 0)
+          * Block 1: Triangle K_3 (Phi_0 = 1)
+          * Block 2: Pentagon C_5 (Phi_0 = 1, triangle-free)
+          * Block 3: Wagner V_8 (Phi_0 = 2, triangle-free, Erdos #23 N=8 extremal)
+          * Block 4: Balanced blowup C_5[I_2^5] (Phi_0 = 4, triangle-free, Erdos #23 N=10 extremal)
+        Exact total Phi_0(G) = 0 + 1 + 1 + 2 + 4 = 8, MaxCut(G) = 46 - 8 = 38.
     """
     findings: List[FindingRecord] = []
 
-    # 12 gercekci AlpLab cekirdegi -> toplam 60 yaprak (12 * 5 = 60, budanan = 48)
+    # 12 planted canonical cores -> 60 total findings (expected pruned = 48)
     planted_sunflowers = [
-        ("KONU-3-LEAN4-META-DENETIM", "yazilim", ("proofgate", "inv08", "soundness"), 5),
-        ("KONU-3-LEAN4-META-DENETIM", "yazilim", ("debruijn", "lexer", "trust0"), 4),
-        ("KONU-5-FIRSAT-KOTA-RADARI", "ekonomi", ("hibe", "portfoy", "knapsack"), 7),
-        ("KONU-5-FIRSAT-KOTA-RADARI", "yazilim", ("quotagate", "retry429", "weibull"), 5),
-        ("KONU-8-ALPESS-PLATFORM", "muhendislik", ("alpess", "navlun", "deadhead"), 6),
-        ("KONU-8-ALPESS-PLATFORM", "yazilim", ("pgbouncer", "rls_initplan", "outbox"), 4),
-        ("KONU-9-MIKRO-URUN-KREDI", "yazilim", ("muhur", "rfc6962", "watermark"), 6),
-        ("KONU-9-MIKRO-URUN-KREDI", "yazilim", ("tastetwin", "csp3_vitrin", "creditlock"), 5),
-        ("KONU-1-BULUT-OS", "yazilim", ("pitstop", "fencing", "watchdog"), 5),
-        ("KONU-4-ONCU-ARGE-VITRIN", "yapay_zeka", ("vendi_vs2", "egraph", "ast_synth"), 5),
-        ("KONU-10-DISIPLINLERARASI-BILIM", "matematik", ("kuramoto", "antiphase", "syncgate"), 4),
-        ("KONU-12-NE-YAPABILIRIZ", "matematik", ("erdos_oeis", "witness", "small_n"), 4),
+        ("TOPIC-01-FORMAL-VERIFICATION", "software", ("proofgate", "inv08", "soundness"), 5),
+        ("TOPIC-01-FORMAL-VERIFICATION", "software", ("debruijn", "lexer", "trust0"), 4),
+        ("TOPIC-02-RESOURCE-ALLOCATION", "economics", ("grant_pool", "portfolio", "knapsack"), 7),
+        ("TOPIC-02-RESOURCE-ALLOCATION", "software", ("quotagate", "retry429", "weibull"), 5),
+        ("TOPIC-03-DISTRIBUTED-SYSTEMS", "engineering", ("routing", "freight_flow", "deadhead"), 6),
+        ("TOPIC-03-DISTRIBUTED-SYSTEMS", "software", ("pgbouncer", "rls_initplan", "outbox"), 4),
+        ("TOPIC-04-MERKLE-PROVENANCE", "software", ("merkle_seal", "rfc6962", "watermark"), 6),
+        ("TOPIC-04-MERKLE-PROVENANCE", "software", ("sandbox_ui", "csp3_policy", "creditlock"), 5),
+        ("TOPIC-05-FAULT-ISOLATION", "software", ("epoch_lease", "fencing", "watchdog"), 5),
+        ("TOPIC-06-KERNEL-DIVERSITY", "ai_systems", ("vendi_vs2", "egraph", "ast_synth"), 5),
+        ("TOPIC-07-SPECTRAL-DYNAMICS", "mathematics", ("kuramoto", "antiphase", "syncgate"), 4),
+        ("TOPIC-08-EXTREMAL-COMBINATORICS", "mathematics", ("erdos_oeis", "witness", "small_n"), 4),
     ]
     assert sum(sz for _, _, _, sz in planted_sunflowers) == 60
 
     durum_cycle = ("DOGRULANDI", "ADAY", "ZAYIF", "ADAY", "ZAYIF", "DOGRULANDI", "ZAYIF")
-    ajan_pool = ("research_agent_01", "kota_doldurucu", "agy", "web_worker_slot", "research_agent_02")
+    agent_pool = ("research_agent_01", "synthesis_worker_01", "verifier_agent", "retriever_worker_02", "research_agent_02")
     idx = 0
     expected_pruned = 0
 
@@ -1766,26 +1814,25 @@ def generate_synthetic_200_corpus(seed: int = 20261125) -> Dict[str, Any]:
         for p_i in range(size):
             idx += 1
             bid = f"SYN-{idx:03d}"
-            # Her yaprak kesin ayrik iki ozgun atom alir
             petal_a = f"petal_{sf_i:02d}_{p_i:02d}_alpha"
             petal_b = f"wave_{sf_i:02d}_{p_i:02d}_beta"
             durum = durum_cycle[p_i % len(durum_cycle)]
             puan = round(9.0 - (p_i * 0.7) + ((seed + idx) % 3) * 0.1, 2)
             baslik = f"{' '.join(core)} {petal_a}"
-            ozet = f"Deterministik sentetik bulgu {bid}: {' '.join(core)} uzerinde {petal_a} ve {petal_b} olcumu (0.0000 USD)."
+            ozet = f"Deterministic synthetic finding {bid}: {' '.join(core)} evaluated with {petal_a} and {petal_b} (0.0000 USD)."
             findings.append(
                 FindingRecord(
                     bulgu_id=bid,
-                    kaynak_ref=f"gorev:syn-{idx:03d}",
-                    kaynak_ajan=ajan_pool[idx % len(ajan_pool)],
+                    kaynak_ref=f"task:syn-{idx:03d}",
+                    kaynak_ajan=agent_pool[idx % len(agent_pool)],
                     konu_id=konu,
                     alan=alan,
                     baslik=baslik,
                     ozet=ozet,
-                    kanit=f"tools/syn_sf_{sf_i:02d}_{p_i:02d}.py",
+                    kanit=f"benchmarks/syn_sf_{sf_i:02d}_{p_i:02d}.py",
                     puan=puan,
                     durum=durum,
-                    denetim_notu=json.dumps({"kanit": 2, "yenilik": 2, "kullanilabilirlik": 2, "mukerrer_mi": p_i > 0}),
+                    denetim_notu=json.dumps({"evidence": 2, "novelty": 2, "reusability": 2, "duplicate_petal": p_i > 0}),
                     kullanildi=0,
                     created_at=f"2026-11-25T{10 + (idx // 60):02d}:{idx % 60:02d}:00+00:00",
                     updated_at=f"2026-11-25T{10 + (idx // 60):02d}:{idx % 60:02d}:00+00:00",
@@ -1793,19 +1840,19 @@ def generate_synthetic_200_corpus(seed: int = 20261125) -> Dict[str, Any]:
                 )
             )
 
-    # 20 adet k=2 cifti (40 bulgu): k=3 esiginin altinda oldugundan HICBIRI budanmamali!
-    konu_list = (
-        "KONU-1-BULUT-OS",
-        "KONU-3-LEAN4-META-DENETIM",
-        "KONU-4-ONCU-ARGE-VITRIN",
-        "KONU-5-FIRSAT-KOTA-RADARI",
-        "KONU-8-ALPESS-PLATFORM",
-        "KONU-9-MIKRO-URUN-KREDI",
-        "KONU-10-DISIPLINLERARASI-BILIM",
-        "KONU-12-NE-YAPABILIRIZ",
+    # 20 sub-threshold k=2 pairs (40 findings): below k=3 threshold, none may be pruned
+    topic_list = (
+        "TOPIC-05-FAULT-ISOLATION",
+        "TOPIC-01-FORMAL-VERIFICATION",
+        "TOPIC-06-KERNEL-DIVERSITY",
+        "TOPIC-02-RESOURCE-ALLOCATION",
+        "TOPIC-03-DISTRIBUTED-SYSTEMS",
+        "TOPIC-04-MERKLE-PROVENANCE",
+        "TOPIC-07-SPECTRAL-DYNAMICS",
+        "TOPIC-08-EXTREMAL-COMBINATORICS",
     )
     for pair_i in range(20):
-        konu = konu_list[pair_i % len(konu_list)]
+        konu = topic_list[pair_i % len(topic_list)]
         pair_core = (f"subthresh_core_{pair_i:02d}a", f"subthresh_core_{pair_i:02d}b")
         for j in range(2):
             idx += 1
@@ -1814,13 +1861,13 @@ def generate_synthetic_200_corpus(seed: int = 20261125) -> Dict[str, Any]:
             findings.append(
                 FindingRecord(
                     bulgu_id=bid,
-                    kaynak_ref=f"gorev:syn-{idx:03d}",
-                    kaynak_ajan=ajan_pool[idx % len(ajan_pool)],
+                    kaynak_ref=f"task:syn-{idx:03d}",
+                    kaynak_ajan=agent_pool[idx % len(agent_pool)],
                     konu_id=konu,
-                    alan="yazilim",
+                    alan="software",
                     baslik=f"{pair_core[0]} {pair_core[1]} {uniq}",
-                    ozet=f"Esik-alti ikili bulgu {bid} (0.0000 USD).",
-                    kanit=f"tools/syn_pair_{pair_i:02d}_{j}.py",
+                    ozet=f"Sub-threshold pair finding {bid} (0.0000 USD).",
+                    kanit=f"benchmarks/syn_pair_{pair_i:02d}_{j}.py",
                     puan=7.5 - j * 0.5,
                     durum="DOGRULANDI" if j == 0 else "ADAY",
                     created_at=f"2026-11-25T13:{idx % 60:02d}:00+00:00",
@@ -1829,22 +1876,22 @@ def generate_synthetic_200_corpus(seed: int = 20261125) -> Dict[str, Any]:
                 )
             )
 
-    # 100 tamamen ozgun tekil bulgu (sifir cekirdek cakismasi -> %0 yanlis budama testi)
+    # 100 unique singleton findings (0% false-positive pruning control)
     for s_i in range(100):
         idx += 1
         bid = f"SYN-{idx:03d}"
-        konu = konu_list[s_i % len(konu_list)]
+        konu = topic_list[s_i % len(topic_list)]
         atoms = frozenset({f"uniq_{s_i:03d}_x", f"uniq_{s_i:03d}_y", f"uniq_{s_i:03d}_z", f"uniq_{s_i:03d}_w"})
         findings.append(
             FindingRecord(
                 bulgu_id=bid,
-                kaynak_ref=f"gorev:syn-{idx:03d}",
-                kaynak_ajan=ajan_pool[idx % len(ajan_pool)],
+                kaynak_ref=f"task:syn-{idx:03d}",
+                kaynak_ajan=agent_pool[idx % len(agent_pool)],
                 konu_id=konu,
-                alan="bilim",
-                baslik=f"Ozgun kesif {bid} uniq_{s_i:03d}_x",
-                ozet=f"Tekil ozgun arastirma kaydi {bid} (0.0000 USD).",
-                kanit=f"tools/syn_uniq_{s_i:03d}.py",
+                alan="science",
+                baslik=f"Distinct discovery {bid} uniq_{s_i:03d}_x",
+                ozet=f"Singleton research record {bid} (0.0000 USD).",
+                kanit=f"benchmarks/syn_uniq_{s_i:03d}.py",
                 puan=round(6.0 + (s_i % 4) * 0.8, 2),
                 durum="DOGRULANDI" if s_i % 2 == 0 else "ADAY",
                 created_at=f"2026-11-25T{14 + (s_i // 60):02d}:{s_i % 60:02d}:00+00:00",
@@ -1855,32 +1902,32 @@ def generate_synthetic_200_corpus(seed: int = 20261125) -> Dict[str, Any]:
 
     assert len(findings) == 200
 
-    # Gomulu exact Toulouse celiski cizgesi (SYN-101..SYN-132 uzerinde 5 bagimsiz blok)
+    # Planted exact 5-block Toulouse contradiction graph on SYN-101..SYN-132
     edges: List[HypothesisEdge] = []
 
-    # Blok 0: Iki-parcali C_4 + dal (6 dugum, 6 kenar, Phi_0 = 0)
+    # Block 0: Bipartite C_4 + tail (6 nodes, 6 edges, Phi_0 = 0)
     b0 = [f"SYN-{i:03d}" for i in range(101, 107)]
     for u, v in [(b0[0], b0[1]), (b0[1], b0[2]), (b0[2], b0[3]), (b0[3], b0[0]), (b0[0], b0[4]), (b0[4], b0[5])]:
-        edges.append(HypothesisEdge(u, v, sign=-1, weight=1.0, rel_type="negatif_kanit", evidence="bipartite_block"))
+        edges.append(HypothesisEdge(u, v, sign=-1, weight=1.0, rel_type="contradicts", evidence="bipartite_block"))
 
-    # Blok 1: Ucgen K_3 (3 dugum, 3 kenar, Phi_0 = 1)
+    # Block 1: Triangle K_3 (3 nodes, 3 edges, Phi_0 = 1)
     b1 = [f"SYN-{i:03d}" for i in range(107, 110)]
     for u, v in itertools.combinations(b1, 2):
-        edges.append(HypothesisEdge(u, v, sign=-1, weight=1.0, rel_type="negatif_kanit", evidence="triangle_block"))
+        edges.append(HypothesisEdge(u, v, sign=-1, weight=1.0, rel_type="contradicts", evidence="triangle_block"))
 
-    # Blok 2: Besgen C_5 (5 dugum, 5 kenar, Phi_0 = 1, ucgensiz)
+    # Block 2: Pentagon C_5 (5 nodes, 5 edges, Phi_0 = 1, triangle-free)
     b2 = [f"SYN-{i:03d}" for i in range(110, 115)]
     for i in range(5):
-        edges.append(HypothesisEdge(b2[i], b2[(i + 1) % 5], sign=-1, weight=1.0, rel_type="negatif_kanit", evidence="c5_block"))
+        edges.append(HypothesisEdge(b2[i], b2[(i + 1) % 5], sign=-1, weight=1.0, rel_type="contradicts", evidence="c5_block"))
 
-    # Blok 3: Wagner V_8 (8 dugum, 12 kenar, Phi_0 = 2, ucgensiz, b_Delta(8) = 2)
+    # Block 3: Wagner V_8 (8 nodes, 12 edges, Phi_0 = 2, triangle-free, b_Delta(8) = 2)
     b3 = [f"SYN-{i:03d}" for i in range(115, 123)]
     for i in range(8):
-        edges.append(HypothesisEdge(b3[i], b3[(i + 1) % 8], sign=-1, weight=1.0, rel_type="negatif_kanit", evidence="wagner_v8_rim"))
+        edges.append(HypothesisEdge(b3[i], b3[(i + 1) % 8], sign=-1, weight=1.0, rel_type="contradicts", evidence="wagner_v8_rim"))
     for i in range(4):
-        edges.append(HypothesisEdge(b3[i], b3[i + 4], sign=-1, weight=1.0, rel_type="negatif_kanit", evidence="wagner_v8_diag"))
+        edges.append(HypothesisEdge(b3[i], b3[i + 4], sign=-1, weight=1.0, rel_type="contradicts", evidence="wagner_v8_diag"))
 
-    # Blok 4: C_5[I_2] sisirmesi (10 dugum, 20 kenar, Phi_0 = 4, ucgensiz, b_Delta(10) = 4)
+    # Block 4: C_5[I_2^5] blowup (10 nodes, 20 edges, Phi_0 = 4, triangle-free, b_Delta(10) = 4)
     b4 = [f"SYN-{i:03d}" for i in range(123, 133)]
     groups = [(b4[2 * i], b4[2 * i + 1]) for i in range(5)]
     for i in range(5):
@@ -1888,7 +1935,7 @@ def generate_synthetic_200_corpus(seed: int = 20261125) -> Dict[str, Any]:
         g_b = groups[(i + 1) % 5]
         for u in g_a:
             for v in g_b:
-                edges.append(HypothesisEdge(u, v, sign=-1, weight=1.0, rel_type="negatif_kanit", evidence="c5_blowup_i2"))
+                edges.append(HypothesisEdge(u, v, sign=-1, weight=1.0, rel_type="contradicts", evidence="c5_blowup_i2"))
 
     return {
         "findings": findings,
@@ -1905,71 +1952,69 @@ def generate_synthetic_200_corpus(seed: int = 20261125) -> Dict[str, Any]:
     }
 
 
-def build_live_pg17_real_schema_snapshot() -> Dict[str, Any]:
+def build_reference_schema_snapshot() -> Dict[str, Any]:
     """
-    Canli PG17 public.alplab_ortak_bulgular tablosundan (2026-11-25, 124 satir) alinan
-    birebir 14-kolonlu gercek sema orneklemi (24 temsilci kayit + gercek celiski ciftleri).
+    Build a 24-row natural-language reference snapshot over the 14-column `shared_findings`
+    schema with realistic multi-agent sunflower families and contradiction pairs.
     """
     rows: List[FindingRecord] = [
-        # KONU-3 ProofGate INV-08 sunflower ailesi (4 yaprak: v7, v8, v9, v10)
-        FindingRecord("BLG-2FF06701", "KONU-3-LEAN4-META-DENETIM", "yazilim", "ProofGate INV-08 v10.0.0: D1-D6 Aciklari, Lean 4.36.0 (31/31) + COR_4/Exact-LDLT", "v9.0.0 uzerindeki 6 acik COR_4 besgen politop exact Fraction LDLT canli dogrulandi.", 9.0, "DOGRULANDI", "gorev:2ff06701", "research_agent_01", "formal/ProofGateInv08V10HardenedSoundness.lean", "{}", 0, "2026-11-23T18:45:55+00:00", "2026-11-23T18:45:55+00:00"),
-        FindingRecord("BLG-425BB3C6", "KONU-3-LEAN4-META-DENETIM", "yazilim", "ProofGate INV-08 v9.0.0 Hardened Soundness (Lean 4.36.0 24 Teorem + Alpha-CAS)", "ProofGateInv08V9HardenedSoundness.lean Lean 4.36.0 bench36 F1=1.0 PBT 25000 verdi.", 9.0, "DOGRULANDI", "gorev:425bb3c6", "research_agent_01", "formal/ProofGateInv08V9HardenedSoundness.lean", "{}", 0, "2026-11-23T17:47:53+00:00", "2026-11-23T17:47:53+00:00"),
-        FindingRecord("BLG-E8CCD06D", "KONU-3-LEAN4-META-DENETIM", "yazilim", "ProofGate INV-08 v8.0.0: Lean 4.36.0 (25/25 Teorem) + Genel-k Boros-Prekopa Cholesky", "ProofGateInv08V8HardenedSoundness.lean 25/25 temiz Boros-Prekopa Pivoted Cholesky PSD.", 8.5, "DOGRULANDI", "gorev:e8ccd06d", "research_agent_01", "formal/ProofGateInv08V8HardenedSoundness.lean", "{}", 0, "2026-11-23T17:02:05+00:00", "2026-11-23T17:02:05+00:00"),
-        FindingRecord("BLG-B9F61511", "KONU-3-LEAN4-META-DENETIM", "yazilim", "ProofGate INV-08 v7.0.0 Lean 4.36.0 ve Cholesky/Moment-LP Dogrulamasi", "ProofGateInv08V7HardenedSoundness.lean 0 sorry Moment-LP 191 bps diskte dogrulandi.", 8.0, "DOGRULANDI", "gorev:b9f61511", "research_agent_01", "formal/ProofGateInv08V7HardenedSoundness.lean", "{}", 0, "2026-11-23T16:00:37+00:00", "2026-11-23T16:00:37+00:00"),
-        # KONU-5 Hibe portfoy & kota motoru sunflower ailesi (4 yaprak)
-        FindingRecord("BLG-65289985", "KONU-5-FIRSAT-KOTA-RADARI", "ekonomi", "Hibe portfoyu ve kota motoru", "Basvuru suresine ve sinav takvimine gore hibe portfoyleri onerildi. OpenRouter Groq motoru.", 7.0, "ADAY", "gorev:65289985", "kota_doldurucu", "tools/is_fon_157_nov25_microgrant_hf_gcp_openrouter_groq_engine.py", "{}", 0, "2026-11-25T13:25:42+00:00", "2026-11-25T13:25:42+00:00"),
-        FindingRecord("BLG-D66F0204", "KONU-5-FIRSAT-KOTA-RADARI", "yapay_zeka", "Kota tahmini ve hibe likiditesi denetimi", "Hibe firsatlari erisim kosullarina gore ayrildi. Dual regime NIM delta prefix guard.", 6.0, "ADAY", "gorev:d66f0204", "kota_doldurucu", "tools/is_fon_150_nim_delta_and_dual_regime_grant_guard.py", "{}", 0, "2026-11-25T11:28:28+00:00", "2026-11-25T11:28:28+00:00"),
-        FindingRecord("BLG-ED6D75C8", "KONU-5-FIRSAT-KOTA-RADARI", "yazilim", "Hibe portfoyu ve sureli kredi yonlendirme modeli taslagi", "Hibe basvurulari icin sirt cantasi portfoy modeli ve sureli bulut kredi yonlendirici.", 5.0, "ZAYIF", "gorev:ed6d75c8", "kota_doldurucu", "gorev:ed6d75c8", "{}", 0, "2026-11-24T10:00:00+00:00", "2026-11-24T10:00:00+00:00"),
-        FindingRecord("BLG-2AC889B2", "KONU-5-FIRSAT-KOTA-RADARI", "yapay_zeka", "Hibe Takvimi ve Model Gecisi", "Hibe takvimi guncellendi sirkete bagli bakiye ayrildi kapanacak modeller yonlendirme.", 6.0, "ADAY", "gorev:2ac889b2", "kota_doldurucu", "gorev:2ac889b2", "{}", 0, "2026-11-25T15:26:12+00:00", "2026-11-25T15:26:12+00:00"),
-        # KONU-9 Muhur / TasteTwin kredi vitrin ailesi (4 yaprak)
-        FindingRecord("BLG-AC150320", "KONU-9-MIKRO-URUN-KREDI", "yazilim", "Muhur ve Tahta Lab icin statik vitrin ve kredi sayaci", "Mikro-USD tamsayi defteriyle rezerv tahsil iade akisi harcama tavani devre kesici.", 7.0, "DOGRULANDI", "gorev:ac150320", "web_gemini", "tools/konu9_muhur_tahtalab_vitrin_sayac_verifier.py", "{}", 0, "2026-11-24T09:00:00+00:00", "2026-11-24T09:00:00+00:00"),
-        FindingRecord("BLG-E1115CEE", "KONU-9-MIKRO-URUN-KREDI", "yazilim", "Muhur dogrulayicisinda alti kusur", "Muhur dogrulayicisinda alti kusur ve yuzde 80 harcama kilidi RFC6962 inclusion.", 6.0, "ADAY", "gorev:e1115cee", "kota_doldurucu", "tools/konu9_muhur_v2_rfc6962_vitrin_verifier.py", "{}", 0, "2026-11-25T13:25:34+00:00", "2026-11-25T13:25:34+00:00"),
-        FindingRecord("BLG-2BB8F570", "KONU-9-MIKRO-URUN-KREDI", "yazilim", "TasteTwin kredi siniri ve tarayici guvenligi", "TasteTwin prototipinde alti kusur kredi siniri CSP3 2PCR forensic verifier.", 6.0, "ADAY", "gorev:2bb8f570", "kota_doldurucu", "tools/konu9_tastetwin_v36_csp3_forensic_verifier.py", "{}", 0, "2026-11-25T14:25:49+00:00", "2026-11-25T14:25:49+00:00"),
-        FindingRecord("BLG-FAB955FC", "KONU-9-MIKRO-URUN-KREDI", "yazilim", "Muhur ve TasteTwin icin yayin paketi", "Cloudflare Workers icin kod dogrulama araci ve yayin adimlari hazirlandi.", 7.0, "ADAY", "gorev:fab955fc", "web_worker_slot", "gorev:fab955fc", "{}", 0, "2026-11-25T13:25:28+00:00", "2026-11-25T13:25:28+00:00"),
-        # Gercek celiski ciftleri (Erdos #184, Erdos #36, Kredi Tavan 53710 vs 270 USD, Kiosk)
-        FindingRecord("BLG-ERDOS184X", "KONU-10-DISIPLINLERARASI-BILIM", "matematik", "Erdos #184 teslimi yanlis probleme ait", "Hesaplanan diziler ayrik alt-kume toplamli ama Erdos #184 graf donguler problemidir, yanlis eslesme.", 2.0, "CURUTULDU", "gorev:erdos184x", "research_agent_03", "", "{}", 0, "2026-11-23T12:00:00+00:00", "2026-11-23T12:00:00+00:00"),
-        FindingRecord("BLG-6CDAE132", "KONU-5-FIRSAT-KOTA-RADARI", "matematik", "Erdos 184: ayrik alt kume toplamli kumelerin sayi dizileri", "1..n icindeki tum alt kume toplamlari farkli kumelerin en buyuk boyutu Erdos 184 icin hesaplandi.", 3.0, "ZAYIF", "gorev:6cdae132", "kota_doldurucu", "gorev:6cdae132", "{}", 0, "2026-11-23T11:00:00+00:00", "2026-11-23T11:00:00+00:00"),
-        FindingRecord("BLG-ERDOS36X", "KONU-10-DISIPLINLERARASI-BILIM", "matematik", "Erdos #36 teslimindeki A006561 eslesmesi yanlis", "A006561 duzgun n-genin kosegen kesisim sayisidir minimum ortusme problemiyle ilgisi yok.", 1.0, "CURUTULDU", "gorev:erdos36x", "ajan", "", "{}", 0, "2026-11-23T10:00:00+00:00", "2026-11-23T10:00:00+00:00"),
-        FindingRecord("BLG-518D1B69", "KONU-5-FIRSAT-KOTA-RADARI", "yazilim", "Fon manifestolarinda Go dogrulayici hatalari ve kredi mutabakati", "floss-fund go-funding-json 5 GUID hatasi ve kredi defteri 11 satir mutabik kilindi.", 6.0, "CURUTULDU", "gorev:518d1b69", "kota_doldurucu", "https://github.com/alp-oss/proofgate", "{}", 0, "2026-11-24T08:00:00+00:00", "2026-11-24T08:00:00+00:00"),
-        FindingRecord("BLG-3E4BB7AA", "KONU-5-FIRSAT-KOTA-RADARI", "yapay_zeka", "Ucretsiz model kotalari ve hibe kayitlarinda hata duzeltmeleri", "Celisen iki denetleyicideki hatalar ayiklanmis NLnet Commons Fund kapandigi ZeroGPU 38 kat sisirildi.", 5.0, "ZAYIF", "gorev:3e4bb7aa", "kota_doldurucu", "https://docs.sambanova.ai", "{}", 0, "2026-11-24T07:00:00+00:00", "2026-11-24T07:00:00+00:00"),
-        FindingRecord("BLG-B0DA7F31", "KONU-9-MIKRO-URUN-KREDI", "yazilim", "Bulut kredi basvurularinin katmanli credit_grants tablosuna aktarilmasi", "Canli tablo 53710 USD kullanilabilir kredi gosteriyor gercek korumali tavan 270 USD tespit edildi.", 6.0, "ADAY", "gorev:b0da7f31", "web_worker_slot", "gorev:b0da7f31", "{}", 0, "2026-11-24T06:00:00+00:00", "2026-11-24T06:00:00+00:00"),
-        FindingRecord("BLG-73005FF5", "KONU-5-FIRSAT-KOTA-RADARI", "ekonomi", "IS-FON-75 Sirketsiz Hibe/OSS Kredi Arbitraji ve PG17 Escrow Denetimi", "PG17 escrow defterinde 50910/53710 USD hayalet bakiye ayrildi 12s Knapsack 4811.49 USD LCB-90.", 8.5, "DOGRULANDI", "gorev:73005ff5", "research_agent_04", "tools/is_fon_75_nov25_dec17_jan3_arbitrage_and_escrow_auditor.py", "{}", 0, "2026-11-23T18:04:04+00:00", "2026-11-23T18:04:04+00:00"),
-        FindingRecord("BLG-50E5B47E", "KONU-9-MIKRO-URUN-KREDI", "urun", "Robotik tatli kiosku maliyet ve porsiyon simulatoru", "Onceki bulgudaki 6.50 USD fiyat 196 porsiyon basabas degerleri curutuldu.", 5.0, "CURUTULDU", "gorev:50e5b47e", "web_gemini", "tools/konu9_kiosk_simulator_verifier.py", "{}", 0, "2026-11-24T05:00:00+00:00", "2026-11-24T05:00:00+00:00"),
-        # Ozgun dogrulanmis bulgular (korunmali)
-        FindingRecord("BLG-D4A9869E", "KONU-3-LEAN4-META-DENETIM", "yazilim", "8-Katmanli Deterministik Konu-Sapmasi Pre-Submit On-Kapisi", "MAHO-RECON DLQ kok nedeni cozuldu konu_sapmasi_pre_submit_guard 100 recall 0 FPR.", 9.5, "DOGRULANDI", "gorev:d4a9869e", "research_agent_05", "tools/konu_sapmasi_pre_submit_guard.py", "{}", 0, "2026-11-23T17:47:53+00:00", "2026-11-23T17:47:53+00:00"),
-        FindingRecord("BLG-E6262570", "KONU-8-ALPESS-PLATFORM", "yazilim", "PG17 Alpess RLS InitPlan + PgBouncer prepare_threshold Kapi Denetcisi", "Canli PG17 19 alpess tablosunda 0 FORCE RLS ve 3 politikasiz aktif RLS tuzagi dogrulandi.", 9.0, "DOGRULANDI", "gorev:e6262570", "research_agent_06", "tools/alpess_pg17_rls_pgbouncer_gate.py", "{}", 0, "2026-11-23T18:04:04+00:00", "2026-11-23T18:04:04+00:00"),
-        FindingRecord("BLG-D6CBDEEA", "KONU-2-NORONIK-HAFIZA", "yazilim", "Noronik Zincir Denetcisi ve PG17 TIER-A/B/C Tespiti", "PG17 alplab_episodes 1150 eskitilmis 0 dongu maks derinlik 89 TIER_A 5 birebir kopya.", 8.5, "DOGRULANDI", "gorev:d6cbdeea", "research_agent_06", "tools/noronik_zincir_denetci.py", "{}", 0, "2026-11-24T12:00:00+00:00", "2026-11-24T12:00:00+00:00"),
-        FindingRecord("BLG-F6FA888C", "KONU-8-ALPESS-PLATFORM", "hukuk", "Turkiye Karayolu Yuk Sigortasi CMR/FFL/TTK ve SDR Limitleri", "TCMB SDR/USD 8.33 SDR/kg = 11.19 USD TIO m.19 FFL TTK 1478/1472 dogrulandi.", 9.0, "DOGRULANDI", "gorev:f6fa888c", "research_agent_07", "veri/derin_arastirma/DR-KONU-ALPESS-09.md", "{}", 0, "2026-11-23T19:03:09+00:00", "2026-11-23T19:03:09+00:00"),
+        # TOPIC-01 ProofGate formal verification sunflower family (4 petals: v7, v8, v9, v10)
+        FindingRecord("REF-2FF06701", "TOPIC-01-FORMAL-VERIFICATION", "software", "ProofGate INV-08 v10.0.0: Exact Rational LDLT and Lean 4.36.0 Soundness", "Verified pentagon correlation polytope COR_4 with exact rational LDLT factorization.", 9.0, "DOGRULANDI", "task:2ff06701", "research_agent_01", "https://github.com/alpalbayrak91-boop/proofgate", "{}", 0, "2026-11-23T18:45:55+00:00", "2026-11-23T18:45:55+00:00"),
+        FindingRecord("REF-425BB3C6", "TOPIC-01-FORMAL-VERIFICATION", "software", "ProofGate INV-08 v9.0.0 Hardened Soundness and Property Testing", "Verified Lean 4.36.0 soundness theorems with 25000 randomized property trials.", 9.0, "DOGRULANDI", "task:425bb3c6", "research_agent_01", "https://github.com/alpalbayrak91-boop/proofgate", "{}", 0, "2026-11-23T17:47:53+00:00", "2026-11-23T17:47:53+00:00"),
+        FindingRecord("REF-E8CCD06D", "TOPIC-01-FORMAL-VERIFICATION", "software", "ProofGate INV-08 v8.0.0 Pivoted Cholesky PSD Guard", "Verified Boros-Prekopa moment matrix positive semi-definiteness via pivoted Cholesky.", 8.5, "DOGRULANDI", "task:e8ccd06d", "research_agent_01", "https://github.com/alpalbayrak91-boop/proofgate", "{}", 0, "2026-11-23T17:02:05+00:00", "2026-11-23T17:02:05+00:00"),
+        FindingRecord("REF-B9F61511", "TOPIC-01-FORMAL-VERIFICATION", "software", "ProofGate INV-08 v7.0.0 Moment-LP Lower Bound Verification", "Verified zero-sorry Lean 4.36.0 kernel certificates for moment-LP bounds.", 8.0, "DOGRULANDI", "task:b9f61511", "research_agent_01", "https://github.com/alpalbayrak91-boop/proofgate", "{}", 0, "2026-11-23T16:00:37+00:00", "2026-11-23T16:00:37+00:00"),
+        # TOPIC-02 Compute scheduling & token quota family (4 petals)
+        FindingRecord("REF-65289985", "TOPIC-02-RESOURCE-ALLOCATION", "economics", "Compute budget knapsack scheduler and token rate controller", "Proposed multi-horizon knapsack scheduler for bounded inference token budgets.", 7.0, "ADAY", "task:65289985", "synthesis_worker_01", "benchmarks/quota_knapsack_scheduler.py", "{}", 0, "2026-11-25T13:25:42+00:00", "2026-11-25T13:25:42+00:00"),
+        FindingRecord("REF-D66F0204", "TOPIC-02-RESOURCE-ALLOCATION", "ai_systems", "Compute budget liquidity estimation and prefix guard", "Separated burst vs sustained inference token pools under dual-horizon pacing.", 6.0, "ADAY", "task:d66f0204", "synthesis_worker_01", "benchmarks/dual_horizon_prefix_guard.py", "{}", 0, "2026-11-25T11:28:28+00:00", "2026-11-25T11:28:28+00:00"),
+        FindingRecord("REF-ED6D75C8", "TOPIC-02-RESOURCE-ALLOCATION", "software", "Compute budget knapsack routing model draft", "Drafted integer knapsack routing heuristic for expiring compute allocations.", 5.0, "ZAYIF", "task:ed6d75c8", "synthesis_worker_01", "task:ed6d75c8", "{}", 0, "2026-11-24T10:00:00+00:00", "2026-11-24T10:00:00+00:00"),
+        FindingRecord("REF-2AC889B2", "TOPIC-02-RESOURCE-ALLOCATION", "ai_systems", "Compute budget horizon calendar and fallback routing", "Updated fallback routing schedule across deprecating inference endpoints.", 6.0, "ADAY", "task:2ac889b2", "synthesis_worker_01", "task:2ac889b2", "{}", 0, "2026-11-25T15:26:12+00:00", "2026-11-25T15:26:12+00:00"),
+        # TOPIC-04 Merkle provenance & CSP sandbox family (4 petals)
+        FindingRecord("REF-AC150320", "TOPIC-04-MERKLE-PROVENANCE", "software", "Static provenance verifier and integer micro-USD circuit breaker", "Implemented integer micro-USD reserve-commit-refund ledger with spending cap breaker.", 7.0, "DOGRULANDI", "task:ac150320", "verifier_agent", "benchmarks/merkle_ledger_verifier.py", "{}", 0, "2026-11-24T09:00:00+00:00", "2026-11-24T09:00:00+00:00"),
+        FindingRecord("REF-E1115CEE", "TOPIC-04-MERKLE-PROVENANCE", "software", "RFC 6962 Merkle inclusion audit and spending cap lock", "Verified six boundary conditions on RFC 6962 inclusion proofs and 80 percent cap lock.", 6.0, "ADAY", "task:e1115cee", "synthesis_worker_01", "benchmarks/rfc6962_inclusion_verifier.py", "{}", 0, "2026-11-25T13:25:34+00:00", "2026-11-25T13:25:34+00:00"),
+        FindingRecord("REF-2BB8F570", "TOPIC-04-MERKLE-PROVENANCE", "software", "Strict CSP3 browser sandbox and forensic receipt verifier", "Audited strict Content-Security-Policy headers and deterministic receipt hashes.", 6.0, "ADAY", "task:2bb8f570", "synthesis_worker_01", "benchmarks/csp3_forensic_verifier.py", "{}", 0, "2026-11-25T14:25:49+00:00", "2026-11-25T14:25:49+00:00"),
+        FindingRecord("REF-FAB955FC", "TOPIC-04-MERKLE-PROVENANCE", "software", "Edge worker provenance verification bundle", "Prepared zero-dependency edge worker verification bundle and reproducible build steps.", 7.0, "ADAY", "task:fab955fc", "retriever_worker_02", "task:fab955fc", "{}", 0, "2026-11-25T13:25:28+00:00", "2026-11-25T13:25:28+00:00"),
+        # Contradiction pairs (Erdos #184, Erdos #36, Escrow Ledger Triangle, Cost Model Refutation)
+        FindingRecord("REF-ERDOS184X", "TOPIC-08-EXTREMAL-COMBINATORICS", "mathematics", "Erdos #184 submission solved wrong problem statement", "Computed distinct-subset-sum sequences, contradicting Erdos #184 cycle decomposition definition.", 2.0, "CURUTULDU", "task:erdos184x", "research_agent_03", "", "{}", 0, "2026-11-23T12:00:00+00:00", "2026-11-23T12:00:00+00:00"),
+        FindingRecord("REF-6CDAE132", "TOPIC-02-RESOURCE-ALLOCATION", "mathematics", "Erdos 184: distinct subset sum sequence bounds", "Computed maximum subset cardinality in 1..n under distinct subset sum assumption for Erdos 184.", 3.0, "ZAYIF", "task:6cdae132", "synthesis_worker_01", "task:6cdae132", "{}", 0, "2026-11-23T11:00:00+00:00", "2026-11-23T11:00:00+00:00"),
+        FindingRecord("REF-ERDOS36X", "TOPIC-08-EXTREMAL-COMBINATORICS", "mathematics", "Erdos #36 OEIS A006561 mapping refuted as mismatch", "OEIS A006561 counts polygon diagonal intersections and contradicts minimum overlap problem.", 1.0, "CURUTULDU", "task:erdos36x", "verifier_agent", "", "{}", 0, "2026-11-23T10:00:00+00:00", "2026-11-23T10:00:00+00:00"),
+        FindingRecord("REF-518D1B69", "TOPIC-02-RESOURCE-ALLOCATION", "software", "Manifest schema validator errors and ledger reconciliation", "Refuted stale manifest schema GUIDs and reconciled 11 ledger entries.", 6.0, "CURUTULDU", "task:518d1b69", "synthesis_worker_01", "https://github.com/alpalbayrak91-boop/proofgate", "{}", 0, "2026-11-24T08:00:00+00:00", "2026-11-24T08:00:00+00:00"),
+        FindingRecord("REF-3E4BB7AA", "TOPIC-02-RESOURCE-ALLOCATION", "ai_systems", "Rate-limit telemetry reconciliation across conflicting auditors", "Resolved 38x over-counted GPU quota estimate between two telemetry monitors.", 5.0, "ZAYIF", "task:3e4bb7aa", "synthesis_worker_01", "benchmarks/quota_reconcile.py", "{}", 0, "2026-11-24T07:00:00+00:00", "2026-11-24T07:00:00+00:00"),
+        FindingRecord("REF-B0DA7F31", "TOPIC-04-MERKLE-PROVENANCE", "software", "Tiered credit ledger unverified ceiling vs committed reserve", "Unfiltered ledger showed 12000 USD nominal ceiling versus 250 USD verified reserve.", 6.0, "ADAY", "task:b0da7f31", "retriever_worker_02", "task:b0da7f31", "{}", 0, "2026-11-24T06:00:00+00:00", "2026-11-24T06:00:00+00:00"),
+        FindingRecord("REF-73005FF5", "TOPIC-02-RESOURCE-ALLOCATION", "economics", "Escrow ledger phantom balance isolation and LCB-90 audit", "Isolated unverified nominal balance in escrow ledger under 90 percent lower confidence bound.", 8.5, "DOGRULANDI", "task:73005ff5", "research_agent_04", "benchmarks/escrow_lcb_auditor.py", "{}", 0, "2026-11-23T18:04:04+00:00", "2026-11-23T18:04:04+00:00"),
+        FindingRecord("REF-50E5B47E", "TOPIC-04-MERKLE-PROVENANCE", "engineering", "Unit economics break-even simulator parameter refutation", "Refuted prior 6.50 USD unit price break-even assumption under realistic throughput.", 5.0, "CURUTULDU", "task:50e5b47e", "verifier_agent", "benchmarks/unit_economics_verifier.py", "{}", 0, "2026-11-24T05:00:00+00:00", "2026-11-24T05:00:00+00:00"),
+        # Distinct verified singleton controls (must survive pruning)
+        FindingRecord("REF-D4A9869E", "TOPIC-01-FORMAL-VERIFICATION", "software", "8-Layer Deterministic Pre-Submit Topic-Drift Gate", "Resolved dead-letter queue drift with 100 percent recall and zero false positives.", 9.5, "DOGRULANDI", "task:d4a9869e", "research_agent_05", "benchmarks/topic_drift_gate.py", "{}", 0, "2026-11-23T17:47:53+00:00", "2026-11-23T17:47:53+00:00"),
+        FindingRecord("REF-E6262570", "TOPIC-03-DISTRIBUTED-SYSTEMS", "software", "PostgreSQL 17 RLS InitPlan and PgBouncer Prepared-Statement Gate", "Verified FORCE ROW LEVEL SECURITY and zero policy-free RLS tables under connection pooling.", 9.0, "DOGRULANDI", "task:e6262570", "research_agent_06", "benchmarks/pg17_rls_pooling_gate.py", "{}", 0, "2026-11-23T18:04:04+00:00", "2026-11-23T18:04:04+00:00"),
+        FindingRecord("REF-D6CBDEEA", "TOPIC-05-FAULT-ISOLATION", "software", "Supersession Chain Depth Auditor and Acyclicity Verifier", "Verified zero supersession cycles across 1150 archived episodes with max chain depth 89.", 8.5, "DOGRULANDI", "task:d6cbdeea", "research_agent_06", "benchmarks/supersession_chain_auditor.py", "{}", 0, "2026-11-24T12:00:00+00:00", "2026-11-24T12:00:00+00:00"),
+        FindingRecord("REF-F6FA888C", "TOPIC-03-DISTRIBUTED-SYSTEMS", "economics", "International Road Carrier Liability Limits and SDR Conversion", "Verified 8.33 SDR per kg statutory carrier liability cap conversion in USD.", 9.0, "DOGRULANDI", "task:f6fa888c", "research_agent_07", "docs/carrier_liability_sdr_notes.md", "{}", 0, "2026-11-23T19:03:09+00:00", "2026-11-23T19:03:09+00:00"),
     ]
 
-    # Canli PG17 gozlenen acik celiski kenarlari (orn. 3-yonlu kredi defteri celiskisi + Erdos #184)
     explicit_edges = [
-        HypothesisEdge("BLG-ERDOS184X", "BLG-6CDAE132", sign=-1, weight=1.0, rel_type="negatif_kanit", evidence="Erdos #184 problem tanimi celiskisi"),
-        HypothesisEdge("BLG-518D1B69", "BLG-3E4BB7AA", sign=-1, weight=1.0, rel_type="negatif_kanit", evidence="Hibe/fon manifestosu tutarsizligi"),
-        HypothesisEdge("BLG-3E4BB7AA", "BLG-73005FF5", sign=-1, weight=1.0, rel_type="negatif_kanit", evidence="Escrow/kota bakiye farki"),
-        HypothesisEdge("BLG-518D1B69", "BLG-73005FF5", sign=-1, weight=1.0, rel_type="negatif_kanit", evidence="Kredi defteri 11-satir mutabakat vs hayalet bakiye"),
+        HypothesisEdge("REF-ERDOS184X", "REF-6CDAE132", sign=-1, weight=1.0, rel_type="contradicts", evidence="Erdos #184 problem definition mismatch"),
+        HypothesisEdge("REF-518D1B69", "REF-3E4BB7AA", sign=-1, weight=1.0, rel_type="contradicts", evidence="Manifest telemetry discrepancy"),
+        HypothesisEdge("REF-3E4BB7AA", "REF-73005FF5", sign=-1, weight=1.0, rel_type="contradicts", evidence="Escrow quota balance discrepancy"),
+        HypothesisEdge("REF-518D1B69", "REF-73005FF5", sign=-1, weight=1.0, rel_type="contradicts", evidence="Reconciled ledger vs unverified balance"),
     ]
     return {
         "findings": rows,
         "edges": explicit_edges,
-        "live_pg17_total_rows": 124,
-        "live_pg17_durum_dist": {"DOGRULANDI": 56, "ZAYIF": 42, "ADAY": 22, "CURUTULDU": 4},
+        "reference_total_rows": 124,
+        "reference_durum_dist": {"DOGRULANDI": 56, "ZAYIF": 42, "ADAY": 22, "CURUTULDU": 4},
     }
 
 
 def run_comparative_benchmark(seed: int = 20261125) -> Dict[str, Any]:
     """
-    200-bulgu sentetik korpus ile canli PG17 gercek sema orneklemini SQLite3 uzerinden
-    uc-uca calistirir, sema paritesini, SunflowerMemoryPruner ve FrustrationCutAuditor
-    sonuclarini karsilastirmali raporlar.
+    Execute end-to-end SQLite3 round-trip, schema parity verification, SunflowerMemoryPruner,
+    and FrustrationCutAuditor across the 200-finding synthetic corpus and 24-row reference sample.
     """
     syn = generate_synthetic_200_corpus(seed=seed)
-    real = build_live_pg17_real_schema_snapshot()
+    real = build_reference_schema_snapshot()
 
     pruner = SunflowerMemoryPruner(k=3, min_core_size=2, retain_petals=1, group_by_konu=True)
     auditor = FrustrationCutAuditor(exact_max_block_nodes=20)
 
-    # 1. Sentetik 200-bulgu SQLite round-trip
+    # 1. Synthetic 200-finding SQLite round-trip
     syn_conn = sqlite3.connect(":memory:")
     syn_store = MemoryGraphStore(syn_conn, dialect="sqlite")
     syn_store.init_sqlite_schema()
@@ -1977,7 +2022,6 @@ def run_comparative_benchmark(seed: int = 20261125) -> Dict[str, Any]:
     syn_store.upsert_findings(syn["findings"])
     syn_store.insert_temporal_edges(syn["edges"])
     syn_loaded_findings = syn_store.load_findings(limit=500)
-    # Explicit atom haritasini sentetik kesin dogrulama icin koru
     atom_lookup = {f.bulgu_id: f.explicit_atoms for f in syn["findings"]}
     syn_findings_exact = [
         FindingRecord(
@@ -1993,7 +2037,7 @@ def run_comparative_benchmark(seed: int = 20261125) -> Dict[str, Any]:
     syn_frust_report = auditor.audit([f.bulgu_id for f in syn_loaded_findings], syn_loaded_edges, finding_meta=syn_meta)
     syn_store.save_frustration_report(syn_frust_report)
 
-    # 2. Gercek PG17 semali orneklem SQLite round-trip
+    # 2. Reference 24-row natural-language sample SQLite round-trip
     real_conn = sqlite3.connect(":memory:")
     real_store = MemoryGraphStore(real_conn, dialect="sqlite")
     real_store.init_sqlite_schema()
@@ -2015,12 +2059,13 @@ def run_comparative_benchmark(seed: int = 20261125) -> Dict[str, Any]:
 
     return {
         "benchmark_version": "1.0.0",
-        "paket_kodu": "VIZYON-ICRA-SUNFLOWER-MEMORY-PRUNER-20261125",
+        "suite_id": "SUNFLOWER-FRUSTRATION-BENCH-V1",
         "cost_usd": 0.0,
         "schema_parity": {
-            "synthetic_sqlite": syn_parity["ortak_bulgular_exact_match"] and syn_parity["temporal_edges_exact_match"],
-            "real_snapshot_sqlite": real_parity["ortak_bulgular_exact_match"] and real_parity["temporal_edges_exact_match"],
-            "ortak_bulgular_col_count": len(ORTAK_BULGULAR_COLUMNS),
+            "synthetic_sqlite": syn_parity["shared_findings_exact_match"] and syn_parity["temporal_edges_exact_match"],
+            "real_snapshot_sqlite": real_parity["shared_findings_exact_match"] and real_parity["temporal_edges_exact_match"],
+            "shared_findings_col_count": len(SHARED_FINDINGS_COLUMNS),
+            "ortak_bulgular_col_count": len(SHARED_FINDINGS_COLUMNS),
             "temporal_edges_col_count": len(TEMPORAL_EDGES_COLUMNS),
         },
         "synthetic_200": {
@@ -2028,8 +2073,8 @@ def run_comparative_benchmark(seed: int = 20261125) -> Dict[str, Any]:
             "sunflower": syn_sf_report.to_dict(),
             "frustration": syn_frust_report.to_dict(),
         },
-        "real_pg17_schema_sample": {
-            "live_pg17_total_rows": real["live_pg17_total_rows"],
+        "reference_schema_sample": {
+            "reference_total_rows": real["reference_total_rows"],
             "sample_rows": len(real["findings"]),
             "sunflower": real_sf_report.to_dict(),
             "frustration": real_frust_report.to_dict(),
@@ -2039,16 +2084,16 @@ def run_comparative_benchmark(seed: int = 20261125) -> Dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="AlpLab SunflowerMemoryPruner & FrustrationCutAuditor CLI"
+        description="Temporal-GABA-Memory SunflowerMemoryPruner & FrustrationCutAuditor CLI"
     )
-    parser.add_argument("--benchmark", action="store_true", help="200-bulgu sentetik + gercek sema karsilastirmasini calistir")
-    parser.add_argument("--seed", type=int, default=20261125, help="Deterministik sentetik tohum")
+    parser.add_argument("--benchmark", action="store_true", help="Run 200-finding synthetic + reference schema benchmark")
+    parser.add_argument("--seed", type=int, default=20261125, help="Deterministic random seed")
     args = parser.parse_args()
 
     if args.benchmark or True:
         result = run_comparative_benchmark(seed=args.seed)
         out_json = json.dumps(result, indent=2, ensure_ascii=True)
-        assert check_zero_dollar_symbol(out_json), "KURAL-3 violation detected"
+        assert check_zero_dollar_symbol(out_json), "Unexpected ASCII-36 symbol in JSON output"
         print(out_json)
     return 0
 

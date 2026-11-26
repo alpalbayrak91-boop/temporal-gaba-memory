@@ -2,11 +2,12 @@
 -- File: formal/EpistemicDAGSoundness.lean
 -- Companion Lean 4 Formalization: 9-D Dimensional Vector Algebra (DimVec9),
 -- Minkowski-Bienayme Variance Decomposition, Holonomy Obstruction, and
--- DAG Neumann/Bellman DP Uniqueness (22 theorems, 0 sorry, standard axioms).
+-- DAG Neumann/Bellman DP Uniqueness (36 theorem declarations: 22 main + 14
+-- algebraic/inductive helper theorems, 0 sorry, standard kernel axioms).
 -- Build: lean --trust=0 formal/EpistemicDAGSoundness.lean
 -- ============================================================================
 
-namespace AlpLabV15Konu10Epistemic
+namespace TemporalGabaMemory.EpistemicDAG
 
 structure DimVec9 where
   dL : Int
@@ -43,7 +44,6 @@ theorem dim9_mul_comm (a b : DimVec9) : mul a b = mul b a := by
   unfold mul
   congr 1 <;> omega
 
--- agy 2026-11-19: Lean 4.36.0 yapi projeksiyon indirgemesi icin dim9_mul_assoc/zero/inv kanitlarinda unfold -> dsimp only duzeltmesi (teorem ifadeleri ayni)
 theorem dim9_mul_assoc (a b c : DimVec9) : mul (mul a b) c = mul a (mul b c) := by
   cases a; cases b; cases c
   dsimp only [mul]
@@ -279,7 +279,6 @@ theorem sumNat_succ_left : ∀ (n : Nat) (f : Nat → Int),
       dsimp only [sumNat]
       omega
   | n + 1, f => by
-      -- agy 2026-11-19: Lean 4.36.0 dsimp only [sumNat] iki adim actigi icin ih uzerinde esit indirgeme (teorem ifadesi ayni)
       have ih := sumNat_succ_left n f
       dsimp only [sumNat] at ih ⊢
       omega
@@ -555,7 +554,7 @@ def t4CostIE2 (cA cB cC cE cD : Int) : Int :=
 def t4CostIE3 (cA cB cC cE cD : Int) : Int :=
   t4CostIE2 cA cB cC cE cD + cA
 
-/-- Teorem 21 (T4 IE-2 Cokusu ve 3. Derece Mobius Onarimi — neg_k10_g3_pairwise_ie2_collapse_on_dense_dag):
+/-- Theorem 21 (T4 IE-2 Collapse and 3rd-Order Mobius Restoration):
     T4 uclu elmasinda IE-2 ortak ata A maliyetini tum sembolik degerler icin tam cA kadar
     eksik hesaplar; cA > 0 iken IE-2 kesin eksik tahmin uretir ve 3. derece Mobius terimi
     tam ata kapanisi esitligini geri yukler. -/
@@ -611,4 +610,4 @@ theorem broken_diamond_usd_nat_holonomy_obstruction :
 #print axioms triple_diamond_t4_ie2_collapse_and_ie3_restoration
 #print axioms broken_diamond_usd_nat_holonomy_obstruction
 
-end AlpLabV15Konu10Epistemic
+end TemporalGabaMemory.EpistemicDAG

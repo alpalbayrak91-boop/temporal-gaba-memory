@@ -1,15 +1,15 @@
 /-
-  AlpLab Formal Math (OMEGA-LEAN) — Erdos Problem #23 Small-Value Witness Verification
+  Companion Formal Proof — Erdos Problem #23 Small-Value Witness Verification (4 theorems)
   Proves on the balanced 10-vertex blowup G10 = C_5[I_2, I_2, I_2, I_2, I_2] (20 edges):
   1. G10 is strictly triangle-free (0 triangles among all 10^3 vertex triples).
   2. By global color-swap symmetry (`monoOrderedPairs (1023 - mask) = monoOrderedPairs mask`),
      fixing vertex 0 to color 0 (`mask = 2 * halfMask`, `halfMask < 512 = 32 * 16`) checks every
      equivalence class of 2-colorings within depth 32 and proves every 2-coloring leaves
      >= 4 monochromatic undirected edges (>= 8 ordered pairs), with equality achieved.
-  Compiled with `/home/alp/.elan/bin/lean --trust=0` (zero sorry, default recursion depth).
+  Compiled with `lean --trust=0` (zero sorry, default recursion depth).
 -/
 
-namespace AlpLab.Erdos23
+namespace TemporalGabaMemory.Erdos23
 
 /-- Balanced blowup `C_5[I_2^5]` on `Fin 10`: vertex `v` belongs to fiber `v.val / 2` in `Z/5Z`. -/
 def c5BlowupAdj (u v : Fin 10) : Bool :=
@@ -54,4 +54,4 @@ theorem c5Blowup_witness_four_mono_edges : monoOrderedPairs 0b1011001100 = 8 := 
 
 theorem c5Blowup_min_frustration_eq_four : allCanonicalColoringsAtLeastFourMonoEdges = true := by decide
 
-end AlpLab.Erdos23
+end TemporalGabaMemory.Erdos23

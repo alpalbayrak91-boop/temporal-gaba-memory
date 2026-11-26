@@ -1,4 +1,4 @@
-"""Zero-dependency Temporal-Causal GABA Memory & Corpus-Centered 3-Channel RBF Vendi Engine."""
+"""Zero-dependency 6-Layer Temporal-Causal GABA, Sheaf-Cohomological & Bi-Temporal Memory System."""
 from __future__ import annotations
 
 from .engine import (
@@ -16,11 +16,58 @@ from .engine import (
     vec_normalize,
     vec_sq_dist,
 )
+from .sunflower_frustration import (
+    FindingRecord,
+    FrustrationCutAuditor,
+    HypothesisEdge,
+    MemoryGraphStore,
+    SunflowerMemoryPruner,
+    run_comparative_benchmark,
+)
+from .sheaf_coboundary import (
+    CellularSheafCoboundaryAuditor,
+    CycleObstruction,
+    SheafAuditReport,
+    SheafEdge,
+    SheafNode,
+)
+from .bitemporal_agm import (
+    AGM_CONTRACTION_SENTINEL,
+    BITEMPORAL_MODULE_VERSION,
+    BiTemporalAGMEngine,
+    BiTemporalAuditReport,
+    BiTemporalEdge,
+    BiTemporalEpisode,
+    RevisionCommitReceipt,
+)
+from .crowding_consolidation import (
+    CROWDING_MODULE_VERSION,
+    FIXED_POINT_SCALE,
+    CrowdingRetrievalReport,
+    MerkleInclusionProof,
+    ProceduralCapsule,
+    SemanticCapsule,
+    SleepConsolidationReport,
+    SlotSheafCrowdingConsolidator,
+    binomial_kl_tail_bound,
+    build_rfc6962_merkle_root,
+    compute_safe_overfetch_k,
+    fixed_point_rrf_fuse,
+    gaba_inhibit_micro,
+    generate_rfc6962_inclusion_proof,
+    jcs_canonicalize,
+    rfc6962_leaf_hash,
+    rfc6962_node_hash,
+    rrf_term_micro,
+    theoretical_unfiltered_recall_at_k,
+    verify_rfc6962_inclusion_proof,
+)
 
-__version__ = "0.3.0"
+__version__ = "1.0.0"
 
 __all__ = [
     "__version__",
+    # Layer 1: Temporal-Causal GABA & Bochner-PSD 3-Channel RBF Vendi Engine
     "AST_NODE_FAMILIES",
     "DeadendRecord",
     "EpisodeRecord",
@@ -34,21 +81,46 @@ __all__ = [
     "vec_dot",
     "vec_normalize",
     "vec_sq_dist",
+    # Layer 2: Erdos-Rado Sunflower Pruner & Toulouse Spin-Glass Frustration Auditor
+    "FindingRecord",
+    "FrustrationCutAuditor",
+    "HypothesisEdge",
+    "MemoryGraphStore",
+    "SunflowerMemoryPruner",
+    "run_comparative_benchmark",
+    # Layer 3: Cellular Sheaf H^1 Coboundary & GL(d) Holonomy Auditor
+    "CellularSheafCoboundaryAuditor",
+    "CycleObstruction",
+    "SheafAuditReport",
+    "SheafEdge",
+    "SheafNode",
+    # Layer 4: 2D Bi-Temporal AGM Belief-Revision & Temporal Graph Engine
+    "AGM_CONTRACTION_SENTINEL",
+    "BITEMPORAL_MODULE_VERSION",
+    "BiTemporalAGMEngine",
+    "BiTemporalAuditReport",
+    "BiTemporalEdge",
+    "BiTemporalEpisode",
+    "RevisionCommitReceipt",
+    # Layer 5: Crowding-Optimal Retrieval, Fixed-Point 4-Signal RRF & Merkle Sleep Consolidation
+    "CROWDING_MODULE_VERSION",
+    "FIXED_POINT_SCALE",
+    "CrowdingRetrievalReport",
+    "MerkleInclusionProof",
+    "ProceduralCapsule",
+    "SemanticCapsule",
+    "SleepConsolidationReport",
+    "SlotSheafCrowdingConsolidator",
+    "binomial_kl_tail_bound",
+    "build_rfc6962_merkle_root",
+    "compute_safe_overfetch_k",
+    "fixed_point_rrf_fuse",
+    "gaba_inhibit_micro",
+    "generate_rfc6962_inclusion_proof",
+    "jcs_canonicalize",
+    "rfc6962_leaf_hash",
+    "rfc6962_node_hash",
+    "rrf_term_micro",
+    "theoretical_unfiltered_recall_at_k",
+    "verify_rfc6962_inclusion_proof",
 ]
-
-from .sunflower_frustration import (
-    FindingRecord,
-    FrustrationCutAuditor,
-    HypothesisEdge,
-    MemoryGraphStore,
-    SunflowerMemoryPruner,
-    run_comparative_benchmark,
-)
-
-from .sheaf_coboundary import (
-    CellularSheafCoboundaryAuditor,
-    CycleObstruction,
-    SheafAuditReport,
-    SheafEdge,
-    SheafNode,
-)

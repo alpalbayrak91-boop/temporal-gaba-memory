@@ -1,23 +1,24 @@
 {
-  "title": "Temporal-GABA-Memory: Causal Inhibitory Negative-Knowledge Gating and Corpus-Centered 3-Channel RBF Vendi Re-Ranking",
+  "title": "Temporal-GABA-Memory: A 6-Layer Mathematically Verified Bi-Temporal, Sheaf-Cohomological and Crowding-Optimal Multi-Agent Memory System",
   "upload_type": "software",
-  "description": "Zero-dependency Pure Python 3.10+ MIT implementation of CHRONO-HYPERMEM: (1) Temporal-Causal GABA negative-knowledge gating, (2) Corpus-Centered 3-Channel Bochner-PSD RBF Vendi re-ranking, (3) Erdos-Rado Delta-System SunflowerMemoryPruner, (4) Toulouse Spin-Glass FrustrationCutAuditor, (5) CellularSheafCoboundaryAuditor for H^1 local-to-global multi-agent paradoxes & GL(d) holonomy, and 27 machine-checked Lean 4 (--trust=0, 0 sorry) theorems.",
+  "description": "Zero-dependency Pure Python 3.10+ MIT implementation of a 6-layer multi-agent epistemic memory architecture: (1) Temporal-Causal GABA negative-knowledge gating and Corpus-Centered 3-Channel Bochner-PSD RBF Vendi diversity re-ranking, (2) Erdos-Rado Delta-System SunflowerMemoryPruner and Toulouse Spin-Glass FrustrationCutAuditor, (3) CellularSheafCoboundaryAuditor for H^1 local-to-global multi-agent paradoxes and GL(d) holonomy, (4) BiTemporalAGMEngine for 2D [valid_time x tx_time] AGM belief-revision with zero future-write leakage, (5) SlotSheafCrowdingConsolidator with analytical supersession crowding bounds, exact Binomial KL-Chernoff over-fetching, fixed-point integer 4-signal RRF, and 3-tier RFC 8785 / RFC 6962 Merkle sleep consolidation, and (6) 65 machine-checked Lean 4 (--trust=0, 0 sorry) theorem declarations across 3 formal proof artifacts (25 + 36 + 4).",
   "creators": [
     {
       "name": "Albayrak, Alp",
-      "affiliation": "AlpLab Research",
       "orcid": "0009-0008-9737-4477"
     }
   ],
   "keywords": [
     "agent-memory",
-    "RAG",
+    "bi-temporal-database",
+    "AGM-belief-revision",
+    "cellular-sheaf-cohomology",
     "negative-knowledge",
     "Vendi-score",
-    "temporal-graph",
+    "Merkle-provenance",
     "Lean 4"
   ],
   "license": "MIT",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "access_right": "open"
 }

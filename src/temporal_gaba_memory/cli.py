@@ -1,12 +1,18 @@
-"""CLI entrypoint for temporal-gaba-memory."""
+"""CLI entrypoint for temporal-gaba-memory v1.0.0."""
 from __future__ import annotations
 
 import argparse
 import json
 import math
-from typing import List
+from typing import Any, Dict, List
 
 from . import __version__
+from .bitemporal_agm import BiTemporalAGMEngine
+from .crowding_consolidation import (
+    SlotSheafCrowdingConsolidator,
+    compute_safe_overfetch_k,
+    theoretical_unfiltered_recall_at_k,
+)
 from .engine import (
     DeadendRecord,
     EpisodeRecord,
@@ -15,6 +21,8 @@ from .engine import (
     is_psd_cholesky,
     tokenize_text,
 )
+from .sheaf_coboundary import CellularSheafCoboundaryAuditor, SheafEdge, SheafNode
+from .sunflower_frustration import FindingRecord, FrustrationCutAuditor, HypothesisEdge, SunflowerMemoryPruner
 
 
 def _run_demo() -> dict:
@@ -113,18 +121,180 @@ def _run_demo() -> dict:
     }
 
 
+def _run_demo_v1() -> Dict[str, Any]:
+    """Run integrated 6-layer showcase for temporal-gaba-memory v1.0.0."""
+    layer1 = _run_demo()
+
+    # Layer 2: Sunflower + Spin-Glass Frustration
+    findings = [
+        FindingRecord(
+            bulgu_id=f"f_{i}",
+            konu_id="consensus",
+            alan="epistemics",
+            baslik=f"Invariant quorum protocol unique_petal_{i}",
+            ozet=f"Quorum consensus invariant core verified with petal_token_{i}",
+            explicit_atoms=frozenset({"quorum", "consensus", "invariant", f"petal_{i}"}),
+        )
+        for i in range(5)
+    ]
+    sf_rep = SunflowerMemoryPruner(k=3, min_core_size=2, retain_petals=1).prune(findings)
+    fr_rep = FrustrationCutAuditor().audit(
+        [f"H{i}" for i in range(5)],
+        [HypothesisEdge(f"H{i}", f"H{(i + 1) % 5}", sign=-1, weight=1.0) for i in range(5)],
+    )
+
+    # Layer 3: Cellular Sheaf H^1 Coboundary
+    sheaf_rep = CellularSheafCoboundaryAuditor().audit(
+        [SheafNode("A", 1), SheafNode("B", 1), SheafNode("C", 1)],
+        [
+            SheafEdge.identity("ab", "A", "B", offset=(10.0,)),
+            SheafEdge.identity("bc", "B", "C", offset=(10.0,)),
+            SheafEdge.identity("ca", "C", "A", offset=(10.0,), weight=0.5),
+        ],
+    )
+
+    # Layer 4 & 5: Bi-Temporal AGM Engine + Supersession Crowding & Sleep Consolidation
+    bt = BiTemporalAGMEngine()
+    for step in range(8):
+        bt.revise_split(
+            slot_key="policy:rate_limit",
+            valid_from=0.0,
+            valid_until=100.0,
+            tx_from=10.0 * (step + 1),
+            payload={"limit_rps": 100 + step * 25, "operator": "lexicographic_quorum_gate", "text": "rate limit policy"},
+            embedding=[0.95, 0.15, 0.05, 0.02],
+        )
+    # Interior valid-time split on [30, 60) at tx=100
+    split_rcpt = bt.revise_split(
+        slot_key="policy:rate_limit",
+        valid_from=30.0,
+        valid_until=60.0,
+        tx_from=100.0,
+        payload={"limit_rps": 50, "operator": "lexicographic_quorum_gate", "text": "burst window rate limit policy"},
+        embedding=[0.96, 0.14, 0.04, 0.02],
+    )
+    bt.revise_split(
+        slot_key="policy:circuit_breaker",
+        valid_from=0.0,
+        valid_until=100.0,
+        tx_from=110.0,
+        payload={"threshold": 5, "operator": "lexicographic_quorum_gate", "text": "circuit breaker policy"},
+        embedding=[0.20, 0.90, 0.15, 0.05],
+    )
+    bt_audit = bt.audit_tx_invariants()
+
+    consolidator = SlotSheafCrowdingConsolidator()
+    active_ret = consolidator.retrieve_active(
+        bt,
+        query_text="rate limit policy",
+        query_embedding=[0.95, 0.15, 0.05, 0.02],
+        valid_at=45.0,
+        tx_at=110.0,
+        top_k=5,
+    )
+    hist_snap = bt.query_as_of(valid_at=45.0, tx_at=85.0, slot_key="policy:rate_limit")
+    sleep_rep = consolidator.sleep_consolidate(bt, findings=findings, min_procedural_support=2)
+
+    return {
+        "version": __version__,
+        "layer1_causal_gaba_vendi": {
+            "pre_deadend_vetoed": layer1["pre_deadend_vetoed"],
+            "post_fix_preserved": layer1["post_fix_preserved"],
+            "pool_kernel_psd_verified": layer1["pool_kernel_psd_verified"],
+            "vendi_vs2_centered": layer1["vendi_vs2_centered"],
+        },
+        "layer2_sunflower_frustration": {
+            "sunflower_free": sf_rep.post_prune_sunflower_free,
+            "pruned_petals": len(sf_rep.pruned_ids),
+            "c5_frustration_phi0": fr_rep.frustration_index_phi0,
+        },
+        "layer3_cellular_sheaf": {
+            "has_local_to_global_paradox": sheaf_rep.has_local_to_global_paradox,
+            "h1_obstruction_norm": round(sheaf_rep.global_h1_obstruction_norm, 6),
+            "cut_restores_consistency": sheaf_rep.cut_restores_global_consistency,
+        },
+        "layer4_bitemporal_agm": {
+            "all_5_invariants_passed": bt_audit.all_passed,
+            "split_residual_count": len(split_rcpt.residual_episode_ids),
+            "historical_pre_split_limit_rps": hist_snap[0].payload["limit_rps"] if hist_snap else None,
+            "current_split_window_head_id": split_rcpt.inserted_head_id,
+        },
+        "layer5_crowding_and_sleep_merkle": {
+            "theoretical_unfiltered_recall_m20_k5": round(theoretical_unfiltered_recall_at_k(5, 20), 6),
+            "safe_overfetch_k_rho90_z3": compute_safe_overfetch_k(5, 0.90, 3.0),
+            "selected_active_ids": list(active_ret.selected_ids),
+            "stale_trap_at_1": active_ret.stale_trap_at_1,
+            "semantic_capsule_count": len(sleep_rep.semantic_capsules),
+            "procedural_capsule_count": len(sleep_rep.procedural_capsules),
+            "all_merkle_proofs_verified": sleep_rep.all_merkle_proofs_verified,
+            "batch_merkle_root_hex": sleep_rep.batch_merkle_root_hex,
+        },
+    }
+
+
+def _run_self_test() -> Dict[str, Any]:
+    """Verify invariants across all layers and return structured status."""
+    v1 = _run_demo_v1()
+    l5 = v1["layer5_crowding_and_sleep_merkle"]
+    checks = {
+        "layer1_gaba_and_psd_ok": bool(
+            v1["layer1_causal_gaba_vendi"]["pre_deadend_vetoed"]
+            and v1["layer1_causal_gaba_vendi"]["post_fix_preserved"]
+            and v1["layer1_causal_gaba_vendi"]["pool_kernel_psd_verified"]
+        ),
+        "layer2_sunflower_frustration_ok": bool(
+            v1["layer2_sunflower_frustration"]["sunflower_free"]
+            and abs(v1["layer2_sunflower_frustration"]["c5_frustration_phi0"] - 1.0) < 1e-6
+        ),
+        "layer3_sheaf_h1_ok": bool(
+            v1["layer3_cellular_sheaf"]["has_local_to_global_paradox"]
+            and v1["layer3_cellular_sheaf"]["cut_restores_consistency"]
+        ),
+        "layer4_bitemporal_5_invariants_ok": bool(
+            v1["layer4_bitemporal_agm"]["all_5_invariants_passed"]
+            and v1["layer4_bitemporal_agm"]["split_residual_count"] == 2
+            and v1["layer4_bitemporal_agm"]["historical_pre_split_limit_rps"] == 275
+        ),
+        "layer5_crowding_merkle_ok": bool(
+            not l5["stale_trap_at_1"]
+            and l5["all_merkle_proofs_verified"]
+            and l5["procedural_capsule_count"] >= 1
+        ),
+    }
+    return {
+        "self_test_passed": all(checks.values()),
+        "version": __version__,
+        "checks": checks,
+        "summary": v1,
+    }
+
+
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="temporal-gaba-memory",
-        description="Temporal-Causal GABA Memory & Corpus-Centered 3-Channel RBF Vendi Engine",
+        description="6-Layer Mathematically Verified Bi-Temporal, Sheaf-Cohomological & Crowding-Optimal Memory System",
+    )
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="Run deterministic end-to-end invariant self-test across all layers",
     )
     sub = parser.add_subparsers(dest="cmd")
     sub.add_parser("demo", help="Run self-contained causal GABA + Vendi + PSD verification demo")
+    sub.add_parser("demo-v1", help="Run integrated v1.0.0 6-layer bi-temporal, sheaf & crowding showcase")
+    sub.add_parser("self-test", help="Run deterministic end-to-end invariant self-test across all layers")
     sub.add_parser("version", help="Print package version")
     args = parser.parse_args(argv)
 
+    if args.self_test or args.cmd == "self-test":
+        res = _run_self_test()
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res["self_test_passed"] else 1
     if args.cmd == "version":
         print(__version__)
+        return 0
+    if args.cmd == "demo-v1":
+        print(json.dumps(_run_demo_v1(), indent=2, ensure_ascii=False))
         return 0
     print(json.dumps(_run_demo(), indent=2, ensure_ascii=False))
     return 0
