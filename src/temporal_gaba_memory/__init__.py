@@ -35,3 +35,12 @@ __all__ = [
     "vec_normalize",
     "vec_sq_dist",
 ]
+
+from .sunflower_frustration import (
+    FindingRecord,
+    FrustrationCutAuditor,
+    HypothesisEdge,
+    MemoryGraphStore,
+    SunflowerMemoryPruner,
+    run_comparative_benchmark,
+)
