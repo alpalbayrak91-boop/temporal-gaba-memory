@@ -17,7 +17,7 @@ from .engine import (
     vec_sq_dist,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "__version__",
@@ -43,4 +43,12 @@ from .sunflower_frustration import (
     MemoryGraphStore,
     SunflowerMemoryPruner,
     run_comparative_benchmark,
+)
+
+from .sheaf_coboundary import (
+    CellularSheafCoboundaryAuditor,
+    CycleObstruction,
+    SheafAuditReport,
+    SheafEdge,
+    SheafNode,
 )

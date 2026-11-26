@@ -8,8 +8,8 @@ authors:
     orcid: "https://orcid.org/0009-0008-9737-4477"
 license: "MIT"
 repository-code: "https://github.com/alpalbayrak91-boop/temporal-gaba-memory"
-version: "0.1.0"
-date-released: "2026-11-25"
+version: "0.3.0"
+date-released: "2026-11-26"
 keywords:
   - agent-memory
   - negative-knowledge

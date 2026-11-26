@@ -22,3 +22,8 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 ## License
 
 MIT License (Copyright 2026 Alp Albayrak).
+
+
+## What's New in v0.3.0 — Cellular Sheaf H^1 Coboundary & Holonomy Auditor
+
+- **`CellularSheafCoboundaryAuditor` (`temporal_gaba_memory.sheaf_coboundary`):** Zero-dependency pure-Python cellular sheaf coboundary, Hodge decomposition, and orientation-invariant `SO(2)`/`GL(d)` holonomy detector catching locally pairwise-consistent yet globally inconsistent `3+`-agent memory cycles (`H^1` obstructions) with bi-temporal `as_of_s` windowing and SHA-256 deterministic audit digests.

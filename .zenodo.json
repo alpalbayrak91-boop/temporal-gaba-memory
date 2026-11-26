@@ -1,7 +1,7 @@
 {
   "title": "Temporal-GABA-Memory: Causal Inhibitory Negative-Knowledge Gating and Corpus-Centered 3-Channel RBF Vendi Re-Ranking",
   "upload_type": "software",
-  "description": "Zero-dependency Pure Python 3.10+ MIT implementation of CHRONO-HYPERMEM: (1) Temporal-Causal GABA negative-knowledge gating, (2) Corpus-Centered 3-Channel Bochner-PSD RBF Vendi re-ranking, (3) Erdos-Rado Delta-System SunflowerMemoryPruner, (4) Toulouse Spin-Glass FrustrationCutAuditor (Phi_0 = |E| - MaxCut), and 27 machine-checked Lean 4 (--trust=0, 0 sorry) theorems.",
+  "description": "Zero-dependency Pure Python 3.10+ MIT implementation of CHRONO-HYPERMEM: (1) Temporal-Causal GABA negative-knowledge gating, (2) Corpus-Centered 3-Channel Bochner-PSD RBF Vendi re-ranking, (3) Erdos-Rado Delta-System SunflowerMemoryPruner, (4) Toulouse Spin-Glass FrustrationCutAuditor, (5) CellularSheafCoboundaryAuditor for H^1 local-to-global multi-agent paradoxes & GL(d) holonomy, and 27 machine-checked Lean 4 (--trust=0, 0 sorry) theorems.",
   "creators": [
     {
       "name": "Albayrak, Alp",
@@ -18,6 +18,6 @@
     "Lean 4"
   ],
   "license": "MIT",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "access_right": "open"
 }
