@@ -1,15 +1,57 @@
 name: Temporal GABA Memory CI
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  unit-tests:
+  test-py310:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install package and run test suite
+        run: |
+          python -m pip install -e .
+          python -W error::DeprecationWarning -m unittest discover -s tests -v
+
+  test-py311:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Run unit tests
-        run: PYTHONPATH=src python -m unittest discover -s tests -v
+      - name: Install package and run test suite
+        run: |
+          python -m pip install -e .
+          python -W error::DeprecationWarning -m unittest discover -s tests -v
+
+  test-py312:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install package, run tests, and run 5-regime benchmark suite
+        run: |
+          python -m pip install -e .
+          python -W error::DeprecationWarning -m unittest discover -s tests -v
+          python benchmarks/run_v1_memory_suite.py
+
+  verify-lean4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan and verify all 65 Lean 4 theorems with trust=0
+        run: |
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain leanprover/lean4:stable
+          ~/.elan/bin/lean --trust=0 formal/EpistemicDAGSoundness.lean
+          ~/.elan/bin/lean --trust=0 formal/Erdos23C5BlowupFrustration.lean
+          ~/.elan/bin/lean --trust=0 formal/TemporalGabaBitemporalCrowding.lean
